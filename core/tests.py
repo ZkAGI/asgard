@@ -5,6 +5,7 @@ from rest_framework import status
 
 User = get_user_model()
 
+
 class UserRegistrationViewTest(TestCase):
     def test_user_registration(self):
         url = reverse("user-registration")
