@@ -1,0 +1,31 @@
+[tool.ruff]
+exclude = [
+    ".git",
+    "*migrations*",
+    "manage.py"
+]
+ignore = [
+    "E501",
+    "E731",
+    "F401",
+    "F403",
+    "F841",
+    "E713"
+]
+line-length = 88
+select = [
+    "E",
+    "F",
+    "W",
+    "I"
+]
+target-version = "py38"
+show-fixes = true
+
+[tool.ruff.mccabe]
+max-complexity = 18
+
+[tool.ruff.isort]
+split-on-trailing-comma = true
+combine-as-imports = false
+force-wrap-aliases = false
