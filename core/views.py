@@ -1,3 +1,5 @@
+import ast
+
 import openai
 import requests
 from bs4 import BeautifulSoup
@@ -20,15 +22,20 @@ class KeywordFetchView(APIView):
         if serializer.is_valid():
             url = serializer.validated_data["url"]
             project_id = serializer.validated_data["project_id"]
-            keywords = self.fetch_keywords(url)
-            return Response({"data": keywords}, status=status.HTTP_200_OK)
+            keywords, soup_text = self.fetch_keywords(url)
+            self.project = Project.objects.get(id=project_id)
+            self.project.keywords = keywords
+            self.project.save()
+            return Response(
+                {"data": {"keywords": keywords, "soup_text": soup_text}},
+                status=status.HTTP_200_OK,
+            )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def fetch_keywords(self, url):
+    def fetch_keywords(self, url) -> (list, str):
         response = requests.get(url)
-        if response.status_code != 200:
-            return Response({"error": "Given URL is not reachable"}, status=400)
+        response.raise_for_status()
         soup = BeautifulSoup(response.content, "html.parser")
         text = soup.get_text()
         while "\n\n" in text or "\t\t" in text:
@@ -49,11 +56,8 @@ class KeywordFetchView(APIView):
             frequency_penalty=0.76,
             presence_penalty=0.44,
         )
-        keywords = response.choices[0]["message"]["content"]
-        return {"keywords": keywords, "soup_text": text.strip()}
-
-    def get_project(self, project_id):
-        self.project = Project.objects.get(id=project_id)
+        keywords = ast.literal_eval(response.choices[0]["message"]["content"])
+        return keywords, text.strip()
 
 
 class UserRegistrationView(APIView):
