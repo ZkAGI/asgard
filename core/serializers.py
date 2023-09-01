@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.constants import EMAIL_REGEX
+from core.models import Project
 
 User = get_user_model()
 
@@ -29,3 +30,15 @@ class UserRegistrationSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class KeywordRequestSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    project_id = serializers.IntegerField()
+
+    def validate_project_id(self, value):
+        try:
+            project = Project.objects.get(pk=value)
+        except Project.DoesNotExist:
+            raise serializers.ValidationError("Invalid project ID")
+        return value

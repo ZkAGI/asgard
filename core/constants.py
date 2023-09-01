@@ -1,1 +1,3 @@
 EMAIL_REGEX = r"([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+"
+OPEN_AI_INSTRUCTION = "You are a intelligent AI. You are given a website landing page text and its brand domain link. We are using tweepy python library to fetch relevant tweets about this domain brand.\nYou will suggest keywords(as list) which can be used in tweepy library (python) to filter tweets stream to get relevant tweets for this brand.\n\nSuggests top 10 keywords.\n\n Never ever use company name as keywords( Follow this instruction strictly )"
+OPEN_AI_APIKEY = "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"

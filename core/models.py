@@ -15,27 +15,10 @@ class BaseModel(models.Model):
 
 class Project(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=100)
     website = models.URLField(max_length=200)
-    ai_rules = models.TextField()
-    keywords = models.TextField()
+    ai_rules = models.TextField(null=True, blank=True)
+    keywords = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
-
-
-class Tweets(BaseModel):
-    TWEET_STATES = (
-        ("FETCHED", "FETCHED"),
-        ("APPROVED", "APPROVED"),
-        ("POSTED", "POSTED"),
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    tweet_content = models.TextField()
-    ai_response = models.TextField(null=True, default=None)
-    misc_data = models.JSONField()
-    state = models.CharField(max_length=255, choices=TWEET_STATES)
-
-    def __str__(self):
-        return f"{self.user.username}'s Tweet - ({self.state})"
