@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from core.models import Project
+from twitter.models import Tweets
 
 
 class FetchTweetRequestSerializer(serializers.Serializer):
@@ -14,11 +15,19 @@ class FetchTweetRequestSerializer(serializers.Serializer):
 
         return value
 
-    def validate(self, data):
-        project_id = data.get("project_id")
-        project = Project.objects.get(pk=project_id)
 
-        if project.keywords is None:
-            raise serializers.ValidationError("No keywords found for this project")
+class TweetSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source="user.username")
+    project = serializers.ReadOnlyField(source="project.id")
 
-        return data
+    class Meta:
+        model = Tweets
+        fields = [
+            "id",
+            "user",
+            "project",
+            "tweet_content",
+            "ai_response",
+            "misc_data",
+            "state",
+        ]

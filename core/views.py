@@ -25,6 +25,7 @@ class KeywordFetchView(APIView):
             keywords, soup_text = self.fetch_keywords(url)
             self.project = Project.objects.get(id=project_id)
             self.project.keywords = keywords
+            self.project.soup_text = soup_text
             self.project.save()
             return Response(
                 {"data": {"keywords": keywords, "soup_text": soup_text}},
