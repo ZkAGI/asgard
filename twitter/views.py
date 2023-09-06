@@ -2,15 +2,30 @@ import json
 
 import requests
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+
+# from requests_oauthlib import OAuth1Session
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.models import Project, UserProfile
 from core.utils import get_openai_response
-from twitter.constants import TWITTER_API_ENDPOINT
+from twitter.constants import (
+    ACCESS_TOKEN,
+    ACCESS_TOKEN_SECRET,
+    CALLBACK_URI,
+    CONSUMER_KEY,
+    CONSUMER_SECRET,
+    TWITTER_API_ENDPOINT,
+    TWITTER_REQUEST_TOKEN_URL,
+)
 from twitter.models import Tweets
-from twitter.serializers import FetchTweetRequestSerializer, TweetSerializer
+from twitter.serializers import (
+    FetchTweetRequestSerializer,
+    PostTweetRequestSerializer,
+    TweetSerializer,
+)
 
 bearer_token = "AAAAAAAAAAAAAAAAAAAAAGBtpAEAAAAAmbcFbMA8obK9WjTB6RlyOLOUUeU%3D5vJU4bgltWJzN0f8uztn5WWSpBd1dGRYPDbePw0heobKcuVyap"
 
@@ -26,75 +41,82 @@ def bearer_oauth(r):
 class FetchTweetsView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = FetchTweetRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            self.project = Project.objects.get(
-                id=serializer.validated_data["project_id"]
-            )
-            self.keywords = self.project.keywords
-
-            request.user = User.objects.get(id=1)
-
-            # Assuming that UserProfile model has a one-to-one relationship with User
-
-            user_profile = UserProfile.objects.get(user=request.user)
-            kws = '["web3 database", "decentralized database", "zero knowledge proofs", "blockchain attributes", "data transparency", "data privacy", "data verifiability", "developer-friendly interface", "wallet authentication", "database encryption"]'
-
-            if user_profile.tweets_left > 0 and request.user.is_active:
-                twtr_query = self.build_twitter_query(
-                    keywords=kws,
-                    max_results=10,
-                    screen_name=request.user.username,
-                )
-                json_response = self.connect_to_endpoint(
-                    url=TWITTER_API_ENDPOINT, params=twtr_query
-                )
-
-                clean_tweets, total_counts = self.process_tweets_and_responses(
-                    json_response
-                )
-                if clean_tweets:
-                    for tweet in clean_tweets:
-                        Tweets.objects.create(
-                            user=request.user,
-                            project=self.project,
-                            tweet_content=tweet["text"],
-                            ai_response=tweet["response"],
-                            misc_data={},
-                            state="FETCHED",
-                        )
-                        user_profile.tweets_left -= total_counts
-                        user_profile.save()
-                    query = Tweets.objects.filter(
-                        user=request.user, project=self.project
-                    )
-                    serialized_tweets = TweetSerializer(query, many=True)
-                    return Response(serialized_tweets.data, status=status.HTTP_200_OK)
-                else:
-                    return Response(
-                        {"message": "All tweets had empty OpenAI responses."}
-                    )
-            else:
-                return Response(
-                    {"data": {"error": "limit exhausted"}},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-        else:
+        if not serializer.is_valid():
             return Response({"message": "Invalid data.", "errors": serializer.errors})
 
+        request.user = User.objects.get(id=1)
+        self.project = get_object_or_404(
+            Project, id=serializer.validated_data["project_id"]
+        )
+        self.user_profile = get_object_or_404(UserProfile, user=request.user)
+        self.keywords = self.project.keywords
+
+        if self.user_profile.tweets_left <= 0 or request.user.is_active is False:
+            return Response(
+                {"data": {"error": "limit exhausted"}},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        twtr_query = self.build_twitter_query(
+            keywords=self.project.keywords,
+            max_results=10,
+            screen_name=request.user.username,
+        )
+        import pdb
+
+        pdb.set_trace()
+        json_response = self.connect_to_endpoint(
+            url=TWITTER_API_ENDPOINT, params=twtr_query
+        )
+
+        clean_tweets, total_counts = self.process_tweets_and_responses(json_response)
+        if not clean_tweets:
+            return Response(
+                {"message": "All tweets had empty OpenAI responses."},
+                status=status.HTTP_200_OK,
+            )
+        self.create_tweets(tweets=clean_tweets, total_count=total_counts)
+        query = Tweets.objects.filter(user=request.user, project=self.project)
+        serialized_tweets = TweetSerializer(query, many=True)
+        return Response(serialized_tweets.data, status=status.HTTP_200_OK)
+
+    def create_tweets(self, tweets, total_count):
+        for tweet in tweets:
+            Tweets.objects.create(
+                user=self.request.user,
+                project=self.project,
+                tweet_content=tweet["text"],
+                ai_response=tweet["response"],
+                misc_data={},
+                state="FETCHED",
+            )
+            self.user_profile.tweets_left -= total_count
+            self.user_profile.save()
+
     def connect_to_endpoint(self, url, params):
-        # Placeholder for your actual authentication method
         response = requests.get(url, auth=bearer_oauth, params=params)
         if response.status_code != 200:
             raise Exception(f"Error: {response.status_code}, {response.text}")
         return response.json()
 
     def build_twitter_query(self, keywords, max_results, screen_name):
+        keywords = [
+            "web3 database",
+            "decentralized database",
+            "zero knowledge proofs",
+            "blockchain attributes",
+            "database speed & privacy",
+            "data transparency",
+            "data privacy",
+            "data verifiability",
+            "firestore SDK",
+            "wallet authentication",
+        ]
         keywords = list(map(lambda x: f'"{x}"', keywords))
         query_str = f'({" OR ".join(keywords)})'
         query_str += f" -is:retweet -is:reply lang:en -from:{screen_name}"
 
         query_params = {
-            "query": "python",
+            "query": query_str,
             "tweet.fields": "author_id,created_at",
             "user.fields": "name",
             "max_results": str(max_results),
@@ -156,3 +178,74 @@ class FetchTweetsView(APIView):
 
         total_counts = tweet_count_1 + tweet_count_2
         return clean_tweets, total_counts
+
+
+# class PostTweetView(APIView):
+#     def post(self, request, *args, **kwargs):
+#         serializer = PostTweetRequestSerializer(
+#             data=request.data, context={"request": request}
+#         )
+#         if not serializer.is_valid():
+#             return Response(
+#                 {"message": "Invalid data.", "errors": serializer.errors},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+#         if not request.user.is_active:
+#             return Response(
+#                 {"data": {"error": "limit exhausted"}},
+#                 status=status.HTTP_401_UNAUTHORIZED,
+#             )
+#
+#         self.tweet = Tweets.objects.get(id=serializer.validated_data["tweet_id"])
+#
+#         tweet_published = self.publish_tweet()
+#         if not tweet_published:
+#             return Response(
+#                 {"message": "Tweet could not be posted."},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             )
+#         return Response({"message": "Tweet posted successfully."})
+#
+#     def publish_tweet(self) -> bool:
+#         oAuth = OAuth1Session(
+#             CONSUMER_KEY,
+#             client_secret=CONSUMER_SECRET,
+#             resource_owner_key=ACCESS_TOKEN,
+#             resource_owner_secret=ACCESS_TOKEN_SECRET,
+#         )
+#         response = oAuth.post(
+#             "https://api.twitter.com/2/tweets",
+#             json=json.dumps(self.tweet.ai_response),
+#         )
+#         if response.status_code != 201:
+#             return False
+#
+#         self.tweet.state = "POSTED"
+#         self.tweet.save()
+#         return True
+
+
+# class RequestTokenView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         oAuth = OAuth1Session(
+#             client_key=CONSUMER_KEY,
+#             client_secret=CONSUMER_SECRET,
+#             callback_uri=CALLBACK_URI,
+#         )
+#         import pdb
+#
+#         pdb.set_trace()
+#         response = oAuth.fetch_request_token(TWITTER_REQUEST_TOKEN_URL)
+#         if not response:
+#             return Response(
+#                 {"message": "Could not fetch request token."},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             )
+#         oauth_token = response.get("oauth_token")
+#         oauth_callback_confirmed = response.get("oauth_callback_confirmed")
+#         return Response(
+#             {
+#                 "oauth_token": oauth_token,
+#                 "oauth_callback_confirmed": oauth_callback_confirmed,
+#             }
+#         )

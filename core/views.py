@@ -6,8 +6,12 @@ from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model, logout
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from twitter.models import Tweets
+from twitter.serializers import TweetSerializer
 
 from .constants import OPEN_AI_APIKEY, OPEN_AI_INSTRUCTION
 from .models import Project
@@ -28,7 +32,7 @@ class KeywordFetchView(APIView):
             self.project.soup_text = soup_text
             self.project.save()
             return Response(
-                {"data": {"keywords": keywords, "soup_text": soup_text}},
+                {"data": {"keywords": keywords}},
                 status=status.HTTP_200_OK,
             )
         else:
@@ -79,4 +83,27 @@ class UserLogoutView(APIView):
         logout(request)
         return Response(
             {"message": "User logged out successfully"}, status=status.HTTP_200_OK
+        )
+
+
+class DashboardTweets(APIView):
+    def get(self, request, *args, **kwargs):
+        request.user = User.objects.get(id=1)
+        queryset = Tweets.objects.filter(user=request.user).order_by("-created_at")
+        total_tweets = queryset.count()
+        tweets_left = request.user.userprofile.tweets_left
+        tweets_posted = queryset.filter(state="POSTED").count()
+
+        paginator = PageNumberPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+
+        serializer = TweetSerializer(paginated_queryset, many=True)
+        return Response(
+            {
+                "tweets_left": tweets_left,
+                "total_tweets": total_tweets,
+                "tweets_posted": tweets_posted,
+                "tweets": serializer.data,
+            },
+            status=status.HTTP_200_OK,
         )

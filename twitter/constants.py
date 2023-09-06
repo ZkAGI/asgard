@@ -1,1 +1,8 @@
 TWITTER_API_ENDPOINT = "https://api.twitter.com/2/tweets/search/recent"
+CONSUMER_KEY = "something"
+CONSUMER_SECRET = "something"
+TWITTER_REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
+TWITTER_ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token"
+CALLBACK_URI = "https://engagex-dash.vercel.app/login/"
+ACCESS_TOKEN_SECRET = "something"
+ACCESS_TOKEN = "something"
