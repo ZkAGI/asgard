@@ -5,8 +5,10 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model, logout
 from rest_framework import status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -21,22 +23,26 @@ User = get_user_model()
 
 
 class KeywordFetchView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
-        serializer = KeywordRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            url = serializer.validated_data["url"]
-            project_id = serializer.validated_data["project_id"]
-            keywords, soup_text = self.fetch_keywords(url)
-            self.project = Project.objects.get(id=project_id)
-            self.project.keywords = keywords
-            self.project.soup_text = soup_text
-            self.project.save()
-            return Response(
-                {"data": {"keywords": keywords}},
-                status=status.HTTP_200_OK,
-            )
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = KeywordRequestSerializer(
+            data=request.data, context={"request": request}
+        )
+        if not serializer.is_valid():
+            return Response({"message": "Invalid data.", "errors": serializer.errors})
+        project_id = serializer.validated_data["project_id"]
+        project = Project.objects.get(id=project_id)
+        url = project.url
+        keywords, soup_text = self.fetch_keywords(url)
+        project.keywords = keywords
+        project.soup_text = soup_text
+        project.save()
+        return Response(
+            {"data": {"keywords": keywords}},
+            status=status.HTTP_200_OK,
+        )
 
     def fetch_keywords(self, url) -> (list, str):
         response = requests.get(url)
@@ -87,8 +93,10 @@ class UserLogoutView(APIView):
 
 
 class DashboardTweets(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, *args, **kwargs):
-        request.user = User.objects.get(id=1)
         queryset = Tweets.objects.filter(user=request.user).order_by("-created_at")
         total_tweets = queryset.count()
         tweets_left = request.user.userprofile.tweets_left

@@ -8,11 +8,13 @@ class FetchTweetRequestSerializer(serializers.Serializer):
     project_id = serializers.IntegerField()
 
     def validate_project_id(self, value):
+        request = self.context.get("request")
         try:
-            Project.objects.get(pk=value)
+            project = Project.objects.get(pk=value, user=request.user)
         except Project.DoesNotExist:
-            raise serializers.ValidationError("Invalid project ID")
-
+            raise serializers.ValidationError(
+                "Invalid project ID or you do not have permission to access this project"
+            )
         return value
 
 
@@ -38,6 +40,7 @@ class PostTweetRequestSerializer(serializers.Serializer):
     tweet_id = serializers.IntegerField()
 
     def validate_tweet_id(self, value):
+        request = self.context.get("request")
         try:
             tweet = Tweets.objects.get(pk=value)
         except Tweets.DoesNotExist:
@@ -46,7 +49,7 @@ class PostTweetRequestSerializer(serializers.Serializer):
         if tweet.state != "APPROVED":
             raise serializers.ValidationError("Tweet is not in APPROVED state")
 
-        if tweet.user != self.context["request"].user:
+        if tweet.user != request.user:
             raise serializers.ValidationError("Tweet does not belong to you")
 
         if tweet.state == "POSTED":

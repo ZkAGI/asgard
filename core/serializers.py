@@ -33,12 +33,14 @@ class UserRegistrationSerializer(serializers.Serializer):
 
 
 class KeywordRequestSerializer(serializers.Serializer):
-    url = serializers.URLField()
     project_id = serializers.IntegerField()
 
     def validate_project_id(self, value):
+        request = self.context.get("request")
         try:
-            project = Project.objects.get(pk=value)
+            project = Project.objects.get(pk=value, user=request.user)
         except Project.DoesNotExist:
-            raise serializers.ValidationError("Invalid project ID")
+            raise serializers.ValidationError(
+                "Invalid project ID or you do not have permission to access this project"
+            )
         return value

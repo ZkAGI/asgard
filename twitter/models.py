@@ -21,3 +21,14 @@ class Tweets(BaseModel):
 
     def __str__(self):
         return f"{self.user.username}'s Tweet - ({self.state})"
+
+
+class TwitterAccount(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    username = models.CharField(max_length=255)
+    access_token = models.CharField(max_length=255)
+    oauth_token_secret = models.CharField(max_length=255)
+    twitter_id = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.username
