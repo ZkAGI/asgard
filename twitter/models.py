@@ -27,6 +27,7 @@ class TwitterAccount(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     username = models.CharField(max_length=255)
     access_token = models.CharField(max_length=255)
+    oauth_token = models.CharField(max_length=255, null=False, blank=False)
     oauth_token_secret = models.CharField(max_length=255)
     twitter_id = models.CharField(max_length=255)
 

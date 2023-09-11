@@ -202,16 +202,20 @@ class PostTweetView(APIView):
         return Response({"message": "Tweet posted successfully."})
 
     def publish_tweet(self) -> bool:
+        twtr_acc = TwitterAccount.objects.get(user=self.request.user)
         oAuth = OAuth1Session(
             CONSUMER_KEY,
             client_secret=CONSUMER_SECRET,
-            resource_owner_key=ACCESS_TOKEN,
-            resource_owner_secret=ACCESS_TOKEN_SECRET,
+            resource_owner_key=twtr_acc.access_token,
+            resource_owner_secret=twtr_acc.oauth_token_secret,
         )
         response = oAuth.post(
             "https://api.twitter.com/2/tweets",
             json=json.dumps(self.tweet.ai_response),
         )
+        import pdb
+
+        pdb.set_trace()
         if response.status_code != 201:
             return False
 
@@ -230,18 +234,31 @@ class RequestOAuthView(APIView):
             client_secret=CONSUMER_SECRET,
             callback_uri=CALLBACK_URI,
         )
-        response = oAuth.fetch_request_token(TWITTER_REQUEST_TOKEN_URL)
-        if not response:
+        try:
+            response = oAuth.fetch_request_token(TWITTER_REQUEST_TOKEN_URL)
+        except requests.exceptions.RequestException as e:
             return Response(
-                {"message": "Could not fetch request token."},
+                {"message": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
         oauth_token = response.get("oauth_token")
         oauth_callback_confirmed = response.get("oauth_callback_confirmed")
+
+        if oauth_callback_confirmed != "true":
+            return Response(
+                {"message": "OAuth callback not confirmed by Twitter."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        twtr_acc, created = TwitterAccount.objects.get_or_create(user=request.user)
+        twtr_acc.oauth_token = oauth_token
+        twtr_acc.save()
+
         return Response(
             {
                 "oauth_token": oauth_token,
-                "oauth_callback_confirmed": oauth_callback_confirmed,
+                "internal_twitter_account_id": twtr_acc.id,
             }
         )
 
@@ -256,20 +273,25 @@ class AccessTokenView(APIView):
             resource_owner_key=oauth_token,
             verifier=oauth_verifier,
         )
-        response = oAuth.fetch_access_token(TWITTER_ACCESS_TOKEN_URL)
-        if not response:
+        try:
+            response = oAuth.fetch_access_token(TWITTER_ACCESS_TOKEN_URL)
+        except requests.exceptions.RequestException as e:
             return Response(
-                {"data": "Could not fetch access token."},
+                {"data": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         access_token = response["oauth_token"]
         screen_name = response["screen_name"]
         access_token_secret = response["oauth_token_secret"]
         twitter_id = response["user_id"]
-        twtr_account = self.get_or_create_twtr_acc(
-            screen_name, access_token, access_token_secret, twitter_id
+        twtr_account = self.get_twtr_acc(
+            screen_name, access_token, oauth_token, access_token_secret, twitter_id
         )
-
+        if twtr_account is None:
+            return Response(
+                {"error": "Could not find Twitter account with the given oauth_token"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         return Response(
             {
                 "data": {
@@ -280,19 +302,16 @@ class AccessTokenView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    def get_or_create_twtr_acc(
-        self, screen_name, access_token, access_token_secret, twitter_id
+    def get_twtr_acc(
+        self, screen_name, access_token, oauth_token, access_token_secret, twitter_id
     ):
         try:
-            twtr_acc = TwitterAccount.objects.get(
-                username=screen_name, user=self.request.user
-            )
+            twtr_acc = TwitterAccount.objects.get(oauth_token=oauth_token)
         except TwitterAccount.DoesNotExist:
-            twtr_acc = TwitterAccount.objects.create(
-                username=screen_name,
-                access_token=access_token,
-                oauth_token_secret=access_token_secret,
-                twitter_id=twitter_id,
-                user=self.request.user,
-            )
+            return None
+        twtr_acc.username = screen_name
+        twtr_acc.access_token = access_token
+        twtr_acc.oauth_token_secret = access_token_secret
+        twtr_acc.twitter_id = twitter_id
+        twtr_acc.save()
         return twtr_acc
