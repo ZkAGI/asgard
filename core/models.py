@@ -1,4 +1,7 @@
+import json
+
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -35,10 +38,11 @@ class Project(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     url = models.URLField()
     name = models.CharField(max_length=100)
-    website = models.URLField(max_length=200)
     ai_rules = models.TextField(null=True, blank=True)
-    keywords = models.TextField(null=True, blank=True)
+    keywords = models.JSONField(blank=True, null=True)
     soup_text = models.TextField(null=True, blank=True)
 
-    def __str__(self):
-        return self.name
+    def save(self, *args, **kwargs):
+        if self.keywords:
+            self.keywords = json.dumps(self.keywords)
+        super(Project, self).save(*args, **kwargs)

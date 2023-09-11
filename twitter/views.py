@@ -62,7 +62,7 @@ class FetchTweetsView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         twtr_query = self.build_twitter_query(
-            keywords=self.project.keywords,
+            keywords=json.loads(self.project.keywords),
             max_results=10,
             screen_name=request.user.username,
         )
@@ -102,18 +102,6 @@ class FetchTweetsView(APIView):
         return response.json()
 
     def build_twitter_query(self, keywords, max_results, screen_name):
-        keywords = [
-            "web3 database",
-            "decentralized database",
-            "zero knowledge proofs",
-            "blockchain attributes",
-            "database speed & privacy",
-            "data transparency",
-            "data privacy",
-            "data verifiability",
-            "firestore SDK",
-            "wallet authentication",
-        ]
         keywords = list(map(lambda x: f'"{x}"', keywords))
         query_str = f'({" OR ".join(keywords)})'
         query_str += f" -is:retweet -is:reply lang:en -from:{screen_name}"
@@ -259,9 +247,6 @@ class RequestOAuthView(APIView):
 
 
 class AccessTokenView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     def get(self, request, *args, **kwargs):
         oauth_token = self.request.query_params.get("oauth_token")
         oauth_verifier = self.request.query_params.get("oauth_verifier")

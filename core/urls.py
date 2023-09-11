@@ -3,6 +3,8 @@ from django.urls import path
 from core.views import (
     DashboardTweets,
     KeywordFetchView,
+    ProjectCreateView,
+    ProjectDetailView,
     UserLogoutView,
     UserRegistrationView,
 )
@@ -17,9 +19,13 @@ urlpatterns = [
     path("register/", UserRegistrationView.as_view(), name="user-registration"),
     path("logout/", UserLogoutView.as_view(), name="user-logout"),
     path("core/keywords/", KeywordFetchView.as_view(), name="fetch-keywords"),
-    path("twitter/tweets/", FetchTweetsView.as_view(), name="fetch-tweets"),
+    path(
+        "twitter/tweets/", FetchTweetsView.as_view(), name="fetch-tweets"
+    ),  # -> Improve this
     path("twitter/tweet/", PostTweetView.as_view(), name="post-tweet"),
     path("dashboard/tweets/", DashboardTweets.as_view(), name="dashboard-tweets"),
     path("twitter/request-token/", AccessTokenView.as_view(), name="request-token"),
     path("twitter/access-token/", RequestOAuthView.as_view(), name="access-token"),
+    path("projects/", ProjectCreateView.as_view()),
+    path("project/<int:pk>/", ProjectDetailView.as_view()),
 ]
