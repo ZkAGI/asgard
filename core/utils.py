@@ -3,6 +3,8 @@ import json
 import openai
 from django.contrib.auth import get_user_model
 
+from core.constants import OPEN_AI_APIKEY
+
 User = get_user_model()
 
 
@@ -32,7 +34,7 @@ Return a JSON object as given format:
 
 
 def call_openai_api(messages, rules=""):
-    openai.api_key = "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"
+    openai.api_key = OPEN_AI_APIKEY
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=messages,
@@ -46,7 +48,7 @@ def call_openai_api(messages, rules=""):
 
 def get_openai_response(tweet_text, soup_text, url, keywords, rules):
     # Set up your OpenAI API key here
-    openai.api_key = "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"
+    openai.api_key = OPEN_AI_APIKEY
     # Call the OpenAI API to get a response for the given text
     content = (
         """You are an intelligent AI social media responder on behalf of a company.
@@ -82,32 +84,27 @@ Return a json object as given format
 }"""
         )
 
-    # response = openai.ChatCompletion.create(
-    #     model="gpt-3.5-turbo-16k",
-    #     messages=[
-    #         {"role": "system", "content": content},
-    #         {
-    #             "role": "user",
-    #             "content": f"Domain: {url}\nlanding page text: {soup_text.strip()} \n Analyze this tweet data:\n "
-    #             + json.dumps({"tweet_text": tweet_text}),
-    #         },
-    #         {
-    #             "role": "user",
-    #             "content": json.dumps({"author_name": "", "tweet_text": tweet_text}),
-    #         },
-    #     ],
-    #     temperature=0.67,
-    #     max_tokens=2431,
-    #     top_p=1,
-    #     frequency_penalty=1.42,
-    #     presence_penalty=1.52,
-    # )
-    # result = json.loads(response.choices[0]["message"]["content"])
-
-    result = {
-        "rate": 9,
-        "reply_text": "Thank you for sharing your thoughts! At Polybase, we believe in the power of a well-rounded skillset. While Excel is important, it's also valuable to have proficiency in SQL, PowerBI/Tableau, and programming languages like Python/R. This combination can open up more opportunities for data analysis and visualization. Keep aiming high!",
-    }
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-16k",
+        messages=[
+            {"role": "system", "content": content},
+            {
+                "role": "user",
+                "content": f"Domain: {url}\nlanding page text: {soup_text.strip()} \n Analyze this tweet data:\n "
+                + json.dumps({"tweet_text": tweet_text}),
+            },
+            {
+                "role": "user",
+                "content": json.dumps({"author_name": "", "tweet_text": tweet_text}),
+            },
+        ],
+        temperature=0.67,
+        max_tokens=2431,
+        top_p=1,
+        frequency_penalty=1.42,
+        presence_penalty=1.52,
+    )
+    result = json.loads(response.choices[0]["message"]["content"])
 
     if not rules.strip():
         return result
