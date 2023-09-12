@@ -17,6 +17,8 @@ class Tweets(BaseModel):
     tweet_content = models.TextField()
     ai_response = models.TextField(null=True, default=None)
     misc_data = models.JSONField()
+    author_id = models.CharField(max_length=255)
+    tweet_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255, choices=TWEET_STATES)
 
     def __str__(self):

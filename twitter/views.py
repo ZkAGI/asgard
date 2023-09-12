@@ -12,8 +12,6 @@ from rest_framework.views import APIView
 from core.models import Project, UserProfile
 from core.utils import get_openai_response
 from twitter.constants import (
-    ACCESS_TOKEN,
-    ACCESS_TOKEN_SECRET,
     CALLBACK_URI,
     CONSUMER_KEY,
     CONSUMER_SECRET,
@@ -50,17 +48,18 @@ class FetchTweetsView(APIView):
         if not serializer.is_valid():
             return Response({"message": "Invalid data.", "errors": serializer.errors})
 
-        self.project = Project.objects.get(
-            id=serializer.validated_data["project_id"], user=request.user
-        )
         self.user_profile = UserProfile.objects.get(user=request.user)
-        self.keywords = self.project.keywords
-
         if self.user_profile.tweets_left <= 0 or request.user.is_active is False:
             return Response(
                 {"data": {"error": "limit exhausted"}},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        self.project = Project.objects.get(
+            id=serializer.validated_data["project_id"], user=request.user
+        )
+
+        self.keywords = self.project.keywords
         twtr_query = self.build_twitter_query(
             keywords=json.loads(self.project.keywords),
             max_results=10,
@@ -86,6 +85,8 @@ class FetchTweetsView(APIView):
         for tweet in tweets:
             Tweets.objects.create(
                 user=self.request.user,
+                author_id=tweet["author_id"],
+                tweet_id=tweet["id"],
                 project=self.project,
                 tweet_content=tweet["text"],
                 ai_response=tweet["response"],
@@ -209,13 +210,14 @@ class PostTweetView(APIView):
             resource_owner_key=twtr_acc.access_token,
             resource_owner_secret=twtr_acc.oauth_token_secret,
         )
+        payload = {
+            "text": self.tweet.ai_response,
+            "reply": {"in_reply_to_tweet_id": self.tweet.tweet_id},
+        }
         response = oAuth.post(
             "https://api.twitter.com/2/tweets",
-            json=json.dumps(self.tweet.ai_response),
+            json=payload,
         )
-        import pdb
-
-        pdb.set_trace()
         if response.status_code != 201:
             return False
 

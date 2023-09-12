@@ -33,6 +33,8 @@ class TweetSerializer(serializers.ModelSerializer):
             "misc_data",
             "state",
             "created_at",
+            "author_id",
+            "tweet_id",
         ]
 
 
