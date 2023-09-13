@@ -23,6 +23,7 @@ from .serializers import (
     ProjectSerializer,
     UserRegistrationSerializer,
 )
+from .utils import StandardResponse
 
 User = get_user_model()
 
@@ -36,7 +37,11 @@ class KeywordFetchView(APIView):
             data=request.data, context={"request": request}
         )
         if not serializer.is_valid():
-            return Response({"message": "Invalid data.", "errors": serializer.errors})
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         project_id = serializer.validated_data["project_id"]
         project = Project.objects.get(id=project_id)
         url = project.url
@@ -44,9 +49,8 @@ class KeywordFetchView(APIView):
         project.keywords = keywords
         project.soup_text = soup_text
         project.save()
-        return Response(
-            {"data": {"keywords": keywords}},
-            status=status.HTTP_200_OK,
+        return StandardResponse(
+            data={"keywords": keywords}, errors=None, status_code=status.HTTP_200_OK
         )
 
     def fetch_keywords(self, url) -> (list, str):
@@ -79,21 +83,28 @@ class KeywordFetchView(APIView):
 class UserRegistrationView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response(
-                {"message": "User registered successfully", "token": token.key},
-                status=status.HTTP_201_CREATED,
+        if not serializer.is_valid():
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = serializer.save()
+        token, created = Token.objects.get_or_create(user=user)
+        return StandardResponse(
+            data={"token": token.key},
+            errors=None,
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class UserLogoutView(APIView):
     def post(self, request):
         logout(request)
-        return Response(
-            {"message": "User logged out successfully"}, status=status.HTTP_200_OK
+        return StandardResponse(
+            data={"message": "User logged out successfully"},
+            errors=None,
+            status_code=status.HTTP_200_OK,
         )
 
 
@@ -111,14 +122,15 @@ class DashboardTweets(APIView):
         paginated_queryset = paginator.paginate_queryset(queryset, request)
 
         serializer = TweetSerializer(paginated_queryset, many=True)
-        return Response(
-            {
+        return StandardResponse(
+            data={
                 "tweets_left": tweets_left,
                 "total_tweets": total_tweets,
                 "tweets_posted": tweets_posted,
                 "tweets": serializer.data,
             },
-            status=status.HTTP_200_OK,
+            errors=None,
+            status_code=status.HTTP_200_OK,
         )
 
 
@@ -128,10 +140,18 @@ class ProjectCreateView(APIView):
 
     def post(self, request, format=None):
         serializer = ProjectSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save(user=request.user)
+        return StandardResponse(
+            data=serializer.data,
+            errors=None,
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class ProjectDetailView(APIView):
@@ -147,17 +167,33 @@ class ProjectDetailView(APIView):
     def get(self, request, pk, format=None):
         project = self.get_object(pk)
         serializer = ProjectSerializer(project)
-        return Response(serializer.data)
+        return StandardResponse(
+            data=serializer.data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
 
     def put(self, request, pk, format=None):
         project = self.get_object(pk)
         serializer = ProjectSerializer(project, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save()
+        return StandardResponse(
+            data=serializer.data,
+            errors=None,
+            status_code=status.HTTP_201_CREATED,
+        )
 
     def delete(self, request, pk, format=None):
         project = self.get_object(pk)
         project.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return StandardResponse(
+            data=None,
+            errors=None,
+            status_code=status.HTTP_204_NO_CONTENT,
+        )

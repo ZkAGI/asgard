@@ -2,10 +2,26 @@ import json
 
 import openai
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 
 from core.constants import OPEN_AI_APIKEY
 
 User = get_user_model()
+
+
+class StandardResponse(HttpResponse):
+    def __init__(self, data=None, errors=None, status_code=200, headers=None):
+        content = {
+            "success": True if errors is None else False,
+            "error": errors,
+            "data": data,
+        }
+        super().__init__(
+            content=json.dumps(content),
+            status=status_code,
+            content_type="application/json",
+            headers=headers,
+        )
 
 
 def get_openai_content(keywords, rules):
@@ -142,4 +158,4 @@ Return a json object as given format
 
     result["rate"] = rate_value
 
-    return {"rate": 5, "reply_text": "hello i'm a reply"}
+    return result

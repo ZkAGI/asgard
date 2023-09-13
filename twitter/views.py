@@ -6,11 +6,10 @@ from requests_oauthlib import OAuth1Session
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.models import Project, UserProfile
-from core.utils import get_openai_response
+from core.utils import StandardResponse, get_openai_response
 from twitter.constants import (
     CALLBACK_URI,
     CONSUMER_KEY,
@@ -46,13 +45,18 @@ class FetchTweetsView(APIView):
             data=request.data, context={"request": request}
         )
         if not serializer.is_valid():
-            return Response({"message": "Invalid data.", "errors": serializer.errors})
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         self.user_profile = UserProfile.objects.get(user=request.user)
         if self.user_profile.tweets_left <= 0 or request.user.is_active is False:
-            return Response(
-                {"data": {"error": "limit exhausted"}},
-                status=status.HTTP_401_UNAUTHORIZED,
+            return StandardResponse(
+                data=None,
+                errors={"error": "limit exhausted"},
+                status_code=status.HTTP_401_UNAUTHORIZED,
             )
 
         self.project = Project.objects.get(
@@ -72,14 +76,19 @@ class FetchTweetsView(APIView):
 
         clean_tweets, total_counts = self.process_tweets_and_responses(json_response)
         if not clean_tweets:
-            return Response(
-                {"message": "All tweets had empty OpenAI responses."},
-                status=status.HTTP_200_OK,
+            return StandardResponse(
+                data=None,
+                errors={"message": "limit exhausted"},
+                status_code=status.HTTP_401_UNAUTHORIZED,
             )
         self.create_tweets(tweets=clean_tweets, total_count=total_counts)
         query = Tweets.objects.filter(user=request.user, project=self.project)
         serialized_tweets = TweetSerializer(query, many=True)
-        return Response(serialized_tweets.data, status=status.HTTP_200_OK)
+        return StandardResponse(
+            data=serialized_tweets.data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
 
     def create_tweets(self, tweets, total_count):
         for tweet in tweets:
@@ -181,26 +190,33 @@ class PostTweetView(APIView):
             data=request.data, context={"request": request}
         )
         if not serializer.is_valid():
-            return Response(
-                {"message": "Invalid data.", "errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         if not request.user.is_active:
-            return Response(
-                {"data": {"error": "limit exhausted"}},
-                status=status.HTTP_401_UNAUTHORIZED,
+            return StandardResponse(
+                data=None,
+                errors={"error": "limit exhausted"},
+                status_code=status.HTTP_401_UNAUTHORIZED,
             )
 
         self.tweet = Tweets.objects.get(id=serializer.validated_data["tweet_id"])
 
         tweet_published = self.publish_tweet()
         if not tweet_published:
-            return Response(
-                {"message": "failed to post tweet"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return StandardResponse(
+                data=None,
+                errors={"message": "failed to post tweet"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        return Response({"message": "Tweet posted successfully."})
+        return StandardResponse(
+            data={"message": "Tweet posted successfully."},
+            errors=None,
+            status_code=status.HTTP_201_CREATED,
+        )
 
     def publish_tweet(self) -> bool:
         twtr_acc = TwitterAccount.objects.get(user=self.request.user)
@@ -239,29 +255,32 @@ class RequestOAuthView(APIView):
         try:
             response = oAuth.fetch_request_token(TWITTER_REQUEST_TOKEN_URL)
         except requests.exceptions.RequestException as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return StandardResponse(
+                data=None,
+                errors={"message": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         oauth_token = response.get("oauth_token")
         oauth_callback_confirmed = response.get("oauth_callback_confirmed")
 
         if oauth_callback_confirmed != "true":
-            return Response(
-                {"message": "OAuth callback not confirmed by Twitter."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return StandardResponse(
+                data=None,
+                errors={"message": "OAuth callback not confirmed by Twitter."},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
         twtr_acc, created = TwitterAccount.objects.get_or_create(user=request.user)
         twtr_acc.oauth_token = oauth_token
         twtr_acc.save()
 
-        return Response(
-            {
+        return StandardResponse(
+            data={
                 "oauth_token": oauth_token,
                 "internal_twitter_account_id": twtr_acc.id,
-            }
+            },
+            errors=None,
+            status_code=status.HTTP_200_OK,
         )
 
 
@@ -278,9 +297,10 @@ class AccessTokenView(APIView):
         try:
             response = oAuth.fetch_access_token(TWITTER_ACCESS_TOKEN_URL)
         except requests.exceptions.RequestException as e:
-            return Response(
-                {"data": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return StandardResponse(
+                data=None,
+                errors={"message": str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         access_token = response["oauth_token"]
         screen_name = response["screen_name"]
@@ -290,18 +310,20 @@ class AccessTokenView(APIView):
             screen_name, access_token, oauth_token, access_token_secret, twitter_id
         )
         if twtr_account is None:
-            return Response(
-                {"error": "Could not find Twitter account with the given oauth_token"},
-                status=status.HTTP_404_NOT_FOUND,
+            return StandardResponse(
+                data=None,
+                errors={
+                    "message": "Could not find Twitter account with the given oauth_token"
+                },
+                status_code=status.HTTP_404_NOT_FOUND,
             )
-        return Response(
-            {
-                "data": {
-                    "username": twtr_account.username,
-                    "twitter_id": twtr_account.twitter_id,
-                }
+        return StandardResponse(
+            data={
+                "username": twtr_account.username,
+                "twitter_id": twtr_account.twitter_id,
             },
-            status=status.HTTP_200_OK,
+            errors=None,
+            status_code=status.HTTP_200_OK,
         )
 
     def get_twtr_acc(
