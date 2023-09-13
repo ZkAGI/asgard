@@ -2,9 +2,11 @@ import json
 
 import requests
 from django.contrib.auth import get_user_model
+from django.http import Http404
 from requests_oauthlib import OAuth1Session
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -240,6 +242,45 @@ class PostTweetView(APIView):
         self.tweet.state = "POSTED"
         self.tweet.save()
         return True
+
+
+class TweetDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format=None):
+        tweet = get_object_or_404(Tweets, pk=pk)
+        serializer = TweetSerializer(tweet)
+        return StandardResponse(
+            data=serializer.data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
+
+    def put(self, request, pk, format=None):
+        tweet = get_object_or_404(Tweets, pk=pk)
+        serializer = TweetSerializer(tweet, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer.save()
+        return StandardResponse(
+            data=serializer.data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, pk, format=None):
+        tweet = get_object_or_404(Tweets, pk=pk)
+        tweet.delete()
+        return StandardResponse(
+            data=None,
+            errors=None,
+            status_code=status.HTTP_204_NO_CONTENT,
+        )
 
 
 class RequestOAuthView(APIView):
