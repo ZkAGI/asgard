@@ -143,7 +143,19 @@ class ProjectView(APIView):
         paginator = PageNumberPagination()
         paginated_projects = paginator.paginate_queryset(projects, request)
         serializer = ProjectSerializer(paginated_projects, many=True)
-        return paginator.get_paginated_response(serializer.data)
+
+        response_data = {
+            "count": paginator.page.paginator.count,
+            "next": paginator.get_next_link(),
+            "previous": paginator.get_previous_link(),
+            "results": serializer.data,
+        }
+
+        return StandardResponse(
+            data=response_data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
 
     def post(self, request, format=None):
         serializer = ProjectSerializer(data=request.data)
