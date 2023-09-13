@@ -134,9 +134,16 @@ class DashboardTweets(APIView):
         )
 
 
-class ProjectCreateView(APIView):
+class ProjectView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        projects = Project.objects.filter(user=request.user).order_by("id")
+        paginator = PageNumberPagination()
+        paginated_projects = paginator.paginate_queryset(projects, request)
+        serializer = ProjectSerializer(paginated_projects, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request, format=None):
         serializer = ProjectSerializer(data=request.data)

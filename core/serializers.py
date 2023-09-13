@@ -38,7 +38,6 @@ class ProjectSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     ai_rules = serializers.CharField(allow_blank=True, required=False)
     keywords = serializers.JSONField(required=False)
-    soup_text = serializers.CharField(allow_blank=True, required=False)
 
     def create(self, validated_data):
         return Project.objects.create(**validated_data)
@@ -48,7 +47,6 @@ class ProjectSerializer(serializers.Serializer):
         instance.name = validated_data.get("name", instance.name)
         instance.ai_rules = validated_data.get("ai_rules", instance.ai_rules)
         instance.keywords = validated_data.get("keywords", instance.keywords)
-        instance.soup_text = validated_data.get("soup_text", instance.soup_text)
         instance.save()
         return instance
 
