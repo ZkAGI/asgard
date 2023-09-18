@@ -4,13 +4,12 @@ import openai
 import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model, logout
-from django.http import Http404
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import APIException, NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from twitter.models import Tweets
@@ -181,7 +180,7 @@ class ProjectDetailView(APIView):
         try:
             return Project.objects.get(pk=pk)
         except Project.DoesNotExist:
-            raise Http404
+            raise NotFound(detail="Project not found")
 
     def get(self, request, pk, format=None):
         project = self.get_object(pk)
@@ -201,7 +200,11 @@ class ProjectDetailView(APIView):
                 errors=serializer.errors,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        serializer.save()
+        try:
+            serializer.save()
+        except Exception as e:
+            raise APIException(detail=str(e))
+
         return StandardResponse(
             data=serializer.data,
             errors=None,
