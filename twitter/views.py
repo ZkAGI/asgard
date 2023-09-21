@@ -7,6 +7,7 @@ from requests_oauthlib import OAuth1Session
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -84,10 +85,21 @@ class FetchTweetsView(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
         self.create_tweets(tweets=clean_tweets, total_count=total_counts)
-        query = Tweets.objects.filter(user=request.user, project=self.project)
-        serialized_tweets = TweetSerializer(query, many=True)
+        query = Tweets.objects.filter(user=request.user, project=self.project).order_by(
+            "id"
+        )
+        paginator = PageNumberPagination()
+        paginated_tweets = paginator.paginate_queryset(query, request)
+        serialized_tweets = TweetSerializer(paginated_tweets, many=True)
+        response_data = {
+            "count": paginator.page.paginator.count,
+            "next": paginator.get_next_link(),
+            "previous": paginator.get_previous_link(),
+            "results": serialized_tweets.data,
+        }
+
         return StandardResponse(
-            data=serialized_tweets.data,
+            data=response_data,
             errors=None,
             status_code=status.HTTP_200_OK,
         )
