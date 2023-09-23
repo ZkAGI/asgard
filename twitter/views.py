@@ -39,6 +39,31 @@ def bearer_oauth(r):
     return r
 
 
+class ProjectTweetsListView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id, format=None):
+        tweets = Tweets.objects.filter(project__id=project_id).order_by("id")
+
+        paginator = PageNumberPagination()
+        paginated_tweets = paginator.paginate_queryset(tweets, request)
+        serializer = TweetSerializer(paginated_tweets, many=True)
+
+        response_data = {
+            "count": paginator.page.paginator.count,
+            "next": paginator.get_next_link(),
+            "previous": paginator.get_previous_link(),
+            "results": serializer.data,
+        }
+
+        return StandardResponse(
+            data=response_data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
+
+
 class FetchTweetsView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]

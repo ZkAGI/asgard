@@ -8,6 +8,7 @@ from core.views import (
     UserLogoutView,
     UserRegistrationView, UserDetailsView,
 )
+from twitter.views import ProjectTweetsListView
 
 urlpatterns = [
     path("user/", UserDetailsView.as_view(), name="user-details"),
@@ -17,5 +18,6 @@ urlpatterns = [
     path("dashboard/tweets/", DashboardTweets.as_view(), name="dashboard-tweets"),
     path("projects/", ProjectView.as_view()),
     path("project/<int:pk>/", ProjectDetailView.as_view()),
+    path('projects/<int:project_id>/tweets/', ProjectTweetsListView.as_view(), name='project-tweets'),
     path("twitter/", include("twitter.urls")),
 ]
