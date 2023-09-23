@@ -6,10 +6,11 @@ from core.views import (
     ProjectDetailView,
     ProjectView,
     UserLogoutView,
-    UserRegistrationView,
+    UserRegistrationView, UserDetailsView,
 )
 
 urlpatterns = [
+    path("user/", UserDetailsView.as_view(), name="user-details"),
     path("register/", UserRegistrationView.as_view(), name="user-registration"),
     path("logout/", UserLogoutView.as_view(), name="user-logout"),
     path("keywords/", KeywordFetchView.as_view(), name="fetch-keywords"),

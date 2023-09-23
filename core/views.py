@@ -20,11 +20,44 @@ from .models import Project
 from .serializers import (
     KeywordRequestSerializer,
     ProjectSerializer,
-    UserRegistrationSerializer,
+    UserRegistrationSerializer, UserDetailsSerializer,
 )
 from .utils import StandardResponse
 
 User = get_user_model()
+
+
+class UserDetailsView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        serialized_user = UserDetailsSerializer(user)
+
+        return StandardResponse(
+            data=serialized_user.data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
+
+    def put(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        serialized_user = UserDetailsSerializer(user, data=request.data)
+
+        if serialized_user.is_valid():
+            serialized_user.save()
+            return StandardResponse(
+                data=serialized_user.data,
+                errors=None,
+                status_code=status.HTTP_200_OK,
+            )
+
+        return StandardResponse(
+            data=None,
+            errors=serialized_user.errors,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class KeywordFetchView(APIView):
