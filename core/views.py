@@ -3,7 +3,7 @@ import ast
 import openai
 import requests
 from bs4 import BeautifulSoup
-from django.contrib.auth import get_user_model, logout
+from django.contrib.auth import get_user_model, logout, authenticate
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -57,6 +57,16 @@ class UserDetailsView(APIView):
             data=None,
             errors=serialized_user.errors,
             status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class UserLogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        return StandardResponse(
+            data={"message": "User logged out successfully"},
+            errors=None,
+            status_code=status.HTTP_200_OK,
         )
 
 
@@ -130,11 +140,28 @@ class UserRegistrationView(APIView):
         )
 
 
-class UserLogoutView(APIView):
-    def post(self, request):
-        logout(request)
+class UserLoginView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        if username is None or password is None:
+            return StandardResponse(
+                data=None,
+                errors={'error': 'Please provide both username and password'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        user = authenticate(username=username, password=password)
+        if not user:
+            return StandardResponse(
+                data=None,
+                errors={'error': 'Invalid credentials'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
         return StandardResponse(
-            data={"message": "User logged out successfully"},
+            data={"token": token.key},
             errors=None,
             status_code=status.HTTP_200_OK,
         )

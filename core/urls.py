@@ -6,7 +6,7 @@ from core.views import (
     ProjectDetailView,
     ProjectView,
     UserLogoutView,
-    UserRegistrationView, UserDetailsView,
+    UserRegistrationView, UserDetailsView, UserLoginView,
 )
 from twitter.views import ProjectTweetsListView
 
@@ -14,6 +14,7 @@ urlpatterns = [
     path("user/", UserDetailsView.as_view(), name="user-details"),
     path("register/", UserRegistrationView.as_view(), name="user-registration"),
     path("logout/", UserLogoutView.as_view(), name="user-logout"),
+    path("login/", UserLoginView.as_view(), name="user-login"),
     path("keywords/", KeywordFetchView.as_view(), name="fetch-keywords"),
     path("dashboard/tweets/", DashboardTweets.as_view(), name="dashboard-tweets"),
     path("projects/", ProjectView.as_view()),
