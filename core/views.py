@@ -89,6 +89,11 @@ class KeywordFetchView(APIView):
         project = Project.objects.get(id=project_id)
         url = project.url
         keywords, soup_text = self.fetch_keywords(url)
+        if keywords == [] or soup_text == '':
+            return StandardResponse(
+                data=None, errors={"message": "Not enough content found on the requested URL, Please add keywords "
+                                              "manually"}, status_code=status.HTTP_200_OK
+            )
         project.keywords = keywords
         project.soup_text = soup_text
         project.save()
@@ -104,6 +109,8 @@ class KeywordFetchView(APIView):
         while "\n\n" in text or "\t\t" in text:
             text = text.replace("\n\n", "\n").replace("\t\t", "\t")
         openai.api_key = OPEN_AI_APIKEY
+        if text.strip() == '':
+            return [], ''
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
