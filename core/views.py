@@ -3,7 +3,7 @@ import ast
 import openai
 import requests
 from bs4 import BeautifulSoup
-from django.contrib.auth import get_user_model, logout, authenticate
+from django.contrib.auth import authenticate, get_user_model, logout
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -20,7 +20,8 @@ from .models import Project
 from .serializers import (
     KeywordRequestSerializer,
     ProjectSerializer,
-    UserRegistrationSerializer, UserDetailsSerializer,
+    UserDetailsSerializer,
+    UserRegistrationSerializer,
 )
 from .utils import StandardResponse
 
@@ -118,7 +119,7 @@ class KeywordFetchView(APIView):
             frequency_penalty=0.76,
             presence_penalty=0.44,
         )
-        keywords = ast.literal_eval(response.choices[0]["message"]["content"])
+        keywords = response.choices[0]["message"]["content"]
         return keywords, text.strip()
 
 
@@ -141,21 +142,20 @@ class UserRegistrationView(APIView):
 
 
 class UserLoginView(APIView):
-
     def post(self, request, *args, **kwargs):
         username = request.data.get("username")
         password = request.data.get("password")
         if username is None or password is None:
             return StandardResponse(
                 data=None,
-                errors={'error': 'Please provide both username and password'},
+                errors={"error": "Please provide both username and password"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         user = authenticate(username=username, password=password)
         if not user:
             return StandardResponse(
                 data=None,
-                errors={'error': 'Invalid credentials'},
+                errors={"error": "Invalid credentials"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
