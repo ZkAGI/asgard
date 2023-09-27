@@ -50,8 +50,8 @@ class UserRegistrationSerializer(serializers.Serializer):
 
 class ProjectSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    url = serializers.URLField()
-    name = serializers.CharField(max_length=100)
+    url = serializers.URLField(required=False)
+    name = serializers.CharField(max_length=100, required=False)
     ai_rules = serializers.CharField(allow_blank=True, required=False)
     keywords = serializers.JSONField(required=False)
 
