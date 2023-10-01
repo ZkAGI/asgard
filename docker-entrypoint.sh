@@ -3,5 +3,5 @@
 # Apply migrations
 python manage.py migrate
 
-# Start the Django development server
-python manage.py runserver 0.0.0.0:443
+# Start the Django server
+gunicorn --bind 0.0.0.0:8000 asgard.wsgi:application
