@@ -104,8 +104,8 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "asgard",
         "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "asgard.cifztxndy8sd.ap-south-1.rds.amazonaws.com",
+        "PASSWORD": "bitBaza$786",
+        "HOST": "asgard-prod.cifztxndy8sd.ap-south-1.rds.amazonaws.com",
         "PORT": 5432,
     }
 }
