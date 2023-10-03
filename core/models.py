@@ -19,7 +19,7 @@ class BaseModel(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    tweets_left = models.IntegerField(default=5000)
+    tweets_left = models.IntegerField(default=2000)
 
 
 @receiver(post_save, sender=User)
