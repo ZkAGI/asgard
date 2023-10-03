@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from core.constants import EMAIL_REGEX
 from core.models import Project
+from twitter.models import Tweets
 
 User = get_user_model()
 
@@ -54,6 +55,18 @@ class ProjectSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100, required=False)
     ai_rules = serializers.CharField(allow_blank=True, required=False)
     keywords = serializers.JSONField(required=False)
+
+    def get_total_tweets(self, obj):
+        return Tweets.objects.filter(project=obj).count()
+
+    def get_posted_tweets(self, obj):
+        return Tweets.objects.filter(project=obj, state="POSTED").count()
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["total_tweets"] = self.get_total_tweets(instance)
+        representation["posted_tweets"] = self.get_posted_tweets(instance)
+        return representation
 
     def create(self, validated_data):
         return Project.objects.create(**validated_data)
