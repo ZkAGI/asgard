@@ -3,6 +3,7 @@ import json
 import requests
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.shortcuts import redirect
 from requests_oauthlib import OAuth1Session
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
@@ -395,14 +396,8 @@ class AccessTokenView(APIView):
                 },
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-        return StandardResponse(
-            data={
-                "username": twtr_account.username,
-                "twitter_id": twtr_account.twitter_id,
-            },
-            errors=None,
-            status_code=status.HTTP_200_OK,
-        )
+        redirect_url = f"https://engagex.bitbaza.io/dashboard/profile?oauth_token={oauth_token}&oauth_verifier={oauth_verifier}"
+        return redirect(redirect_url)
 
     def get_twtr_acc(
         self, screen_name, access_token, oauth_token, access_token_secret, twitter_id
