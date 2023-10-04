@@ -4,6 +4,7 @@ import openai
 import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth import authenticate, get_user_model, logout
+from openai.error import RateLimitError
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -93,8 +94,8 @@ class KeywordFetchView(APIView):
             return StandardResponse(
                 data=None,
                 errors={
-                    "message": "Not enough content found on the requested URL, Please add keywords "
-                    "manually"
+                    "message": "Not enough content found on the requested URL, Please add keywords manually or try "
+                    "again later"
                 },
                 status_code=status.HTTP_200_OK,
             )
@@ -115,23 +116,26 @@ class KeywordFetchView(APIView):
         openai.api_key = OPEN_AI_APIKEY
         if text.strip() == "":
             return [], ""
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": OPEN_AI_INSTRUCTION},
-                {
-                    "role": "user",
-                    "content": f"Domain: {url}\nlanding page text: {text.strip()}",
-                },
-            ],
-            temperature=0.99,
-            max_tokens=2431,
-            top_p=1,
-            frequency_penalty=0.76,
-            presence_penalty=0.44,
-        )
-        keywords = response.choices[0]["message"]["content"]
-        return keywords, text.strip()
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": OPEN_AI_INSTRUCTION},
+                    {
+                        "role": "user",
+                        "content": f"Domain: {url}\nlanding page text: {text.strip()}",
+                    },
+                ],
+                temperature=0.99,
+                max_tokens=2431,
+                top_p=1,
+                frequency_penalty=0.76,
+                presence_penalty=0.44,
+            )
+            keywords = ast.literal_eval(response.choices[0]["message"]["content"])
+            return keywords, text.strip()
+        except RateLimitError as e:
+            return [], ""
 
 
 class UserRegistrationView(APIView):

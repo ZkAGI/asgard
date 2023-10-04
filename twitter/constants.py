@@ -6,3 +6,4 @@ TWITTER_ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token"
 CALLBACK_URI = "https://api.engagex.bitbaza.io/api/v1/twitter/request-token/"
 ACCESS_TOKEN_SECRET = "vs4X1p9QLpXaEtCHqDHIXMesgewpWsZjoScqLZlIdWh52"
 ACCESS_TOKEN = "1433525480632717315-yi1NkqsitfpHGzdwo4tQmSfqdbcaOY"
+DAILY_TWEET_LIMIT = 100

@@ -1,9 +1,11 @@
+import ast
 import json
+from datetime import datetime, timedelta
 
 import requests
 from django.contrib.auth import get_user_model
-from django.http import Http404
 from django.shortcuts import redirect
+from django.utils import timezone
 from requests_oauthlib import OAuth1Session
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
@@ -18,6 +20,7 @@ from twitter.constants import (
     CALLBACK_URI,
     CONSUMER_KEY,
     CONSUMER_SECRET,
+    DAILY_TWEET_LIMIT,
     TWITTER_ACCESS_TOKEN_URL,
     TWITTER_API_ENDPOINT,
     TWITTER_REQUEST_TOKEN_URL,
@@ -243,6 +246,15 @@ class PostTweetView(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
 
+        if not self.check_daily_tweet_limit():
+            return StandardResponse(
+                data=None,
+                errors={
+                    "message": "Daily tweet limit exceeded, only 100 tweets allowed per day"
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         self.tweet = Tweets.objects.get(id=serializer.validated_data["tweet_id"])
 
         tweet_published = self.publish_tweet()
@@ -257,6 +269,27 @@ class PostTweetView(APIView):
             errors=None,
             status_code=status.HTTP_201_CREATED,
         )
+
+    def check_daily_tweet_limit(self) -> bool:
+        # Check daily tweet limit for the user
+        daily_tweet_limit = DAILY_TWEET_LIMIT
+
+        user = self.request.user
+        today_start = timezone.make_aware(
+            datetime.combine(datetime.today(), datetime.min.time())
+        )
+        today_end = today_start + timedelta(days=1)
+
+        # Check the user's tweet count for today
+        todays_tweet_count = Tweets.objects.filter(
+            user=user,
+            created_at__gte=today_start,
+            created_at__lt=today_end,
+            state="POSTED",
+        ).count()
+        if todays_tweet_count >= daily_tweet_limit:
+            return False
+        return True
 
     def publish_tweet(self) -> bool:
         twtr_acc = TwitterAccount.objects.get(user=self.request.user)
