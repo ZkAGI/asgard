@@ -26,7 +26,7 @@ class StandardResponse(HttpResponse):
 
 def get_openai_content(keywords, rules):
     base_content = """You are an intelligent AI social media responder on behalf of a company.
-You will be given a website landing page text and its brand domain link. Tweet reply text should not be bigger than 250 characters.
+You will be given a website landing page text and its brand domain link. Tweet reply text should not be bigger than 200 characters.
 System is using the tweepy Python library to fetch relevant tweets.
 System used these keywords(selected by user) to get tweets from Twitter: {}"""
 
