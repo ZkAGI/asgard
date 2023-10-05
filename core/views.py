@@ -107,7 +107,7 @@ class KeywordFetchView(APIView):
         )
 
     def fetch_keywords(self, url) -> (list, str):
-        response = requests.get(url)
+        response = requests.get(url, verify=False)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, "html.parser")
         text = soup.get_text()
