@@ -26,8 +26,6 @@ SECRET_KEY = "+12gn9s6v&(5^l9m--yct620on9ur86%fk(6*ux$p8wn-!v*z2"
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "43.205.216.151",
-    "3.7.189.222",
     "*",
 ]
 
@@ -71,7 +69,7 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = False
 
-CORS_ALLOWED_ORIGINS = ["*"]
+CORS_ALLOWED_ORIGINS = ["https://engagex.bitbaza.io", "http://engagex.bitbaza.io"]
 
 
 ROOT_URLCONF = "asgard.urls"
