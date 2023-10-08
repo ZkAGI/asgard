@@ -2,6 +2,7 @@ from django.urls import path
 
 from twitter.views import (
     AccessTokenView,
+    CheckTwitterView,
     FetchTweetsView,
     PostTweetView,
     RequestOAuthView,
@@ -14,4 +15,5 @@ urlpatterns = [
     path("post-tweet/", PostTweetView.as_view(), name="post-tweet"),
     path("request-token/", AccessTokenView.as_view(), name="request-token"),
     path("access-token/", RequestOAuthView.as_view(), name="access-token"),
+    path("account/", CheckTwitterView.as_view(), name="check-account"),
 ]

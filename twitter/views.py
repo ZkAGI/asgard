@@ -43,6 +43,28 @@ def bearer_oauth(r):
     return r
 
 
+class CheckTwitterView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        twtr_acc = TwitterAccount.objects.filter(user=user)
+
+        if twtr_acc.exists():
+            return StandardResponse(
+                data={"twitter_account_connected": True},
+                errors=None,
+                status_code=status.HTTP_200_OK,
+            )
+
+        return StandardResponse(
+            data={"twitter_account_connected": False},
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
+
+
 class ProjectTweetsListView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
