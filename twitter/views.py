@@ -284,9 +284,9 @@ class PostTweetView(APIView):
             return StandardResponse(
                 data=None,
                 errors={
-                    "message": "failed to post tweet, check your connected account"
+                    "message": "failed to post tweet, check your connected Twitter account"
                 },
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
             )
         return StandardResponse(
             data={"message": "Tweet posted successfully."},
