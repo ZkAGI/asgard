@@ -283,7 +283,9 @@ class PostTweetView(APIView):
         if not tweet_published:
             return StandardResponse(
                 data=None,
-                errors={"message": "failed to post tweet"},
+                errors={
+                    "message": "failed to post tweet, check your connected account"
+                },
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         return StandardResponse(
@@ -293,7 +295,6 @@ class PostTweetView(APIView):
         )
 
     def check_daily_tweet_limit(self) -> bool:
-        # Check daily tweet limit for the user
         daily_tweet_limit = DAILY_TWEET_LIMIT
 
         user = self.request.user
@@ -314,7 +315,10 @@ class PostTweetView(APIView):
         return True
 
     def publish_tweet(self) -> bool:
-        twtr_acc = TwitterAccount.objects.get(user=self.request.user)
+        try:
+            twtr_acc = TwitterAccount.objects.get(user=self.request.user)
+        except TwitterAccount.DoesNotExist:
+            return False
         oAuth = OAuth1Session(
             CONSUMER_KEY,
             client_secret=CONSUMER_SECRET,
