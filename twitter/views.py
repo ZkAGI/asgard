@@ -52,8 +52,12 @@ class CheckTwitterView(APIView):
         twtr_acc = TwitterAccount.objects.filter(user=user)
 
         if twtr_acc.exists():
+            acc = twtr_acc[0]
             return StandardResponse(
-                data={"twitter_account_connected": True},
+                data={
+                    "username": acc.username,
+                    "twitter_id": acc.twitter_id,
+                },
                 errors=None,
                 status_code=status.HTTP_200_OK,
             )
@@ -214,7 +218,6 @@ class FetchTweetsView(APIView):
                 tweet_text = tweet.get("text", "")
                 if tweet_text in processed_tweets:
                     continue
-
                 openai_response = get_openai_response(
                     tweet_text=tweet_text,
                     soup_text=self.project.soup_text,
