@@ -220,7 +220,7 @@ class FetchTweetsView(APIView):
                     soup_text=self.project.soup_text,
                     url=self.project.url,
                     keywords=self.project.keywords,
-                    rules="",
+                    rules=self.project.ai_rules if self.project.ai_rules else "",
                 )
 
                 if (
