@@ -63,7 +63,7 @@ class CheckTwitterView(APIView):
             )
 
         return StandardResponse(
-            data={"twitter_account_connected": False},
+            data=None,
             errors=None,
             status_code=status.HTTP_200_OK,
         )
