@@ -292,7 +292,7 @@ class PostTweetView(APIView):
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         return StandardResponse(
-            data={"message": "Tweet posted successfully."},
+            data={"tweet_id": self.tweet.tweet_id},
             errors=None,
             status_code=status.HTTP_201_CREATED,
         )
@@ -339,6 +339,7 @@ class PostTweetView(APIView):
         if response.status_code != 201:
             return False
 
+        self.tweet.tweet_id = response.json()["data"]["id"]
         self.tweet.state = "POSTED"
         self.tweet.save()
         return True
