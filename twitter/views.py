@@ -113,7 +113,7 @@ class FetchTweetsView(APIView):
         if self.user_profile.tweets_left <= 0 or request.user.is_active is False:
             return StandardResponse(
                 data=None,
-                errors={"error": "limit exhausted"},
+                errors={"message": "limit exhausted"},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
 
@@ -267,7 +267,7 @@ class PostTweetView(APIView):
         if not request.user.is_active:
             return StandardResponse(
                 data=None,
-                errors={"error": "limit exhausted"},
+                errors={"message": "limit exhausted"},
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
 
@@ -475,3 +475,25 @@ class AccessTokenView(APIView):
         twtr_acc.twitter_id = twitter_id
         twtr_acc.save()
         return twtr_acc
+
+
+class TwitterAccountDelete(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        try:
+            user = User.objects.get(id=request.user.id)
+            twitter_account = TwitterAccount.objects.get(user=user)
+            twitter_account.delete()
+            return StandardResponse(
+                data={"message": "Twitter account deleted"},
+                errors=None,
+                status_code=status.HTTP_204_NO_CONTENT,
+            )
+        except TwitterAccount.DoesNotExist:
+            return StandardResponse(
+                data=None,
+                errors={"message": "Twitter account not found"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )

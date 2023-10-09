@@ -7,6 +7,7 @@ from twitter.views import (
     PostTweetView,
     RequestOAuthView,
     TweetDetailView,
+    TwitterAccountDelete,
 )
 
 urlpatterns = [
@@ -16,4 +17,5 @@ urlpatterns = [
     path("request-token/", AccessTokenView.as_view(), name="request-token"),
     path("access-token/", RequestOAuthView.as_view(), name="access-token"),
     path("account/", CheckTwitterView.as_view(), name="check-account"),
+    path("logout/", TwitterAccountDelete.as_view(), name="twitter-account-delete"),
 ]

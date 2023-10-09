@@ -163,14 +163,14 @@ class UserLoginView(APIView):
         if username is None or password is None:
             return StandardResponse(
                 data=None,
-                errors={"error": "Please provide both username and password"},
+                errors={"message": "Please provide both username and password"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         user = authenticate(username=username, password=password)
         if not user:
             return StandardResponse(
                 data=None,
-                errors={"error": "Invalid credentials"},
+                errors={"message": "Invalid credentials"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
