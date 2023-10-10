@@ -74,7 +74,13 @@ class ProjectTweetsListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id, format=None):
+        tweet_state = request.GET.get("state", None)
+
         tweets = Tweets.objects.filter(project__id=project_id).order_by("id")
+        if tweet_state:
+            tweets = Tweets.objects.filter(
+                project__id=project_id, state=tweet_state
+            ).order_by("id")
 
         paginator = PageNumberPagination()
         paginated_tweets = paginator.paginate_queryset(tweets, request)
