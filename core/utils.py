@@ -3,6 +3,7 @@ import json
 import openai
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
+from rest_framework import permissions
 
 from core.constants import OPEN_AI_APIKEY
 
@@ -22,6 +23,15 @@ class StandardResponse(HttpResponse):
             content_type="application/json",
             headers=headers,
         )
+
+
+class IsWhitelisted(permissions.BasePermission):
+    """
+    Custom permission to only allow whitelisted users to access the API.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.userprofile.is_whitelisted
 
 
 def get_openai_content(keywords, rules):

@@ -24,14 +24,14 @@ from .serializers import (
     UserDetailsSerializer,
     UserRegistrationSerializer,
 )
-from .utils import StandardResponse
+from .utils import IsWhitelisted, StandardResponse
 
 User = get_user_model()
 
 
 class UserDetailsView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, *args, **kwargs):
         user = User.objects.get(id=request.user.id)
@@ -74,7 +74,7 @@ class UserLogoutView(APIView):
 
 class KeywordFetchView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def post(self, request, *args, **kwargs):
         serializer = KeywordRequestSerializer(
@@ -184,7 +184,7 @@ class UserLoginView(APIView):
 
 class DashboardTweets(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, *args, **kwargs):
         queryset = Tweets.objects.filter(user=request.user).order_by("-created_at")
@@ -210,7 +210,7 @@ class DashboardTweets(APIView):
 
 class ProjectView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, format=None):
         projects = Project.objects.filter(user=request.user).order_by("id")
@@ -249,7 +249,7 @@ class ProjectView(APIView):
 
 class ProjectDetailView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get_object(self, pk):
         try:

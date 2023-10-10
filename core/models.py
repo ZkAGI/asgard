@@ -19,6 +19,7 @@ class BaseModel(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_whitelisted = models.BooleanField(default=False)
     tweets_left = models.IntegerField(default=2000)
 
 

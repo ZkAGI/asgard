@@ -15,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from core.models import Project, UserProfile
-from core.utils import StandardResponse, get_openai_response
+from core.utils import IsWhitelisted, StandardResponse, get_openai_response
 from twitter.constants import (
     CALLBACK_URI,
     CONSUMER_KEY,
@@ -45,7 +45,7 @@ def bearer_oauth(r):
 
 class CheckTwitterView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, *args, **kwargs):
         user = User.objects.get(id=request.user.id)
@@ -71,7 +71,7 @@ class CheckTwitterView(APIView):
 
 class ProjectTweetsListView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, project_id, format=None):
         tweet_state = request.GET.get("state", None)
@@ -102,7 +102,7 @@ class ProjectTweetsListView(APIView):
 
 class FetchTweetsView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def post(self, request, *args, **kwargs):
         serializer = FetchTweetRequestSerializer(
@@ -257,7 +257,7 @@ class FetchTweetsView(APIView):
 
 class PostTweetView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def post(self, request, *args, **kwargs):
         serializer = PostTweetRequestSerializer(
@@ -353,7 +353,7 @@ class PostTweetView(APIView):
 
 class TweetDetailView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, pk, format=None):
         tweet = get_object_or_404(Tweets, pk=pk)
@@ -392,7 +392,7 @@ class TweetDetailView(APIView):
 
 class RequestOAuthView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, *args, **kwargs):
         oAuth = OAuth1Session(
@@ -485,7 +485,7 @@ class AccessTokenView(APIView):
 
 class TwitterAccountDelete(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def delete(self, request):
         try:
