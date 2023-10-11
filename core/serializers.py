@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.constants import EMAIL_REGEX
-from core.models import Project
+from core.models import Project, UserProfile
 from twitter.models import Tweets
 
 User = get_user_model()
@@ -16,6 +16,13 @@ class UserDetailsSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=30, allow_blank=True)
     last_name = serializers.CharField(max_length=150, allow_blank=True)
+    is_whitelisted = serializers.SerializerMethodField()
+
+    def get_is_whitelisted(self, obj):  # Add this method
+        try:
+            return UserProfile.objects.get(user=obj).is_whitelisted
+        except UserProfile.DoesNotExist:
+            return False
 
     def update(self, instance, validated_data):
         instance.username = validated_data.get("username", instance.username)

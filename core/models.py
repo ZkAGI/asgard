@@ -22,6 +22,9 @@ class UserProfile(models.Model):
     is_whitelisted = models.BooleanField(default=False)
     tweets_left = models.IntegerField(default=2000)
 
+    def __str__(self):
+        return self.user.username
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
