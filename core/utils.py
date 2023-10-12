@@ -64,8 +64,8 @@ def call_openai_api(messages, rules=""):
     return openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=messages,
-        temperature=0.67,
-        max_tokens=2431,
+        temperature=0,
+        max_tokens=300,
         top_p=1,
         frequency_penalty=1.42,
         presence_penalty=1.52,
@@ -124,14 +124,18 @@ Return a json object as given format
                 "content": json.dumps({"author_name": "", "tweet_text": tweet_text}),
             },
         ],
-        temperature=0.67,
-        max_tokens=2431,
+        temperature=0,
+        max_tokens=300,
         top_p=1,
         frequency_penalty=1.42,
         presence_penalty=1.52,
     )
     result = json.loads(response.choices[0]["message"]["content"])
-
+    if "reply_text" in result.keys() and len(result["reply_text"]) > 250:
+        return {
+            "rate": 0,
+            "message": "Generated reply exceeds 250 characters, so it's ignored.",
+        }
     if not rules.strip():
         return result
     rate_value = int(result["rate"])
@@ -155,8 +159,8 @@ Return a json object as given format
                     + json.dumps({"tweet_text": tweet_text}),
                 },
             ],
-            temperature=0.67,
-            max_tokens=2431,
+            temperature=0,
+            max_tokens=300,
             top_p=1,
             frequency_penalty=1.42,
             presence_penalty=1.52,
@@ -167,7 +171,7 @@ Return a json object as given format
             return get_openai_response(tweet_text, soup_text, url, keywords, rules)
 
     result["rate"] = rate_value
-    if "reply_text" in result and len(result["reply_text"]) > 250:
+    if "reply_text" in result.keys() and len(result["reply_text"]) > 250:
         return {
             "rate": 0,
             "message": "Generated reply exceeds 250 characters, so it's ignored.",
