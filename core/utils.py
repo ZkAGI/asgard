@@ -142,7 +142,7 @@ Return a json object as given format
                 {
                     "role": "system",
                     "content": """You are an smart intelligent AI social media responder on behalf of a twitter page.
-        What would be your reply on the tweet. else empty. tweet reply text should not be bigger than 250 characters.
+        What would be your reply on the tweet. else empty. tweet reply text strictly should not exceed 250 characters.
         Return a json object as given format
         {
             \"reply_text\":\"reply_text\"
@@ -167,5 +167,10 @@ Return a json object as given format
             return get_openai_response(tweet_text, soup_text, url, keywords, rules)
 
     result["rate"] = rate_value
+    if "reply_text" in result and len(result["reply_text"]) > 250:
+        return {
+            "rate": 0,
+            "message": "Generated reply exceeds 250 characters, so it's ignored.",
+        }
 
     return result
