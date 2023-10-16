@@ -245,7 +245,6 @@ class FetchTweetsView(APIView):
                     processed_tweets.add(tweet_text)
                     processed_responses.add(openai_response["reply_text"])
                     tweet["response"] = openai_response["reply_text"]
-                    tweet["approved"] = "false"
                     tweet["posted"] = "false"
                     clean_tweets.append(tweet)
 

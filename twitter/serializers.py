@@ -48,9 +48,6 @@ class PostTweetRequestSerializer(serializers.Serializer):
         except Tweets.DoesNotExist:
             raise serializers.ValidationError("Invalid tweet ID")
 
-        if tweet.state != "APPROVED":
-            raise serializers.ValidationError("Tweet is not in APPROVED state")
-
         if tweet.user != request.user:
             raise serializers.ValidationError("Tweet does not belong to you")
 

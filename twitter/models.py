@@ -9,7 +9,6 @@ User = get_user_model()
 class Tweets(BaseModel):
     TWEET_STATES = (
         ("FETCHED", "FETCHED"),
-        ("APPROVED", "APPROVED"),
         ("POSTED", "POSTED"),
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
