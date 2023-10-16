@@ -80,7 +80,7 @@ class ProjectTweetsListView(APIView):
         if tweet_state:
             tweets = Tweets.objects.filter(
                 project__id=project_id, state=tweet_state
-            ).order_by("id")
+            ).order_by("-created_at")
 
         paginator = PageNumberPagination()
         paginated_tweets = paginator.paginate_queryset(tweets, request)
@@ -177,8 +177,11 @@ class FetchTweetsView(APIView):
                 misc_data={},
                 state="FETCHED",
             )
-            self.user_profile.tweets_left -= total_count
-            self.user_profile.save()
+
+        self.user_profile.tweets_left = max(
+            self.user_profile.tweets_left - total_count, 0
+        )
+        self.user_profile.save()
 
     def connect_to_endpoint(self, url, params):
         response = requests.get(url, auth=bearer_oauth, params=params)

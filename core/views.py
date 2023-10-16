@@ -213,7 +213,7 @@ class ProjectView(APIView):
     permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, format=None):
-        projects = Project.objects.filter(user=request.user).order_by("id")
+        projects = Project.objects.filter(user=request.user).order_by("-created_at")
         paginator = PageNumberPagination()
         paginated_projects = paginator.paginate_queryset(projects, request)
         serializer = ProjectSerializer(paginated_projects, many=True)
