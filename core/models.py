@@ -49,3 +49,9 @@ class Project(BaseModel):
         if self.keywords:
             self.keywords = json.dumps(self.keywords)
         super(Project, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.user.username + " - " + self.name
+
+    class Meta:
+        unique_together = ["user", "name"]

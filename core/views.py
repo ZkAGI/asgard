@@ -187,7 +187,7 @@ class DashboardTweets(APIView):
     permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, *args, **kwargs):
-        queryset = Tweets.objects.filter(user=request.user).order_by("-created_at")
+        queryset = Tweets.objects.filter(user=request.user).order_by("created_at")
         total_tweets = queryset.count()
         tweets_left = request.user.userprofile.tweets_left
         tweets_posted = queryset.filter(state="POSTED").count()
@@ -213,7 +213,7 @@ class ProjectView(APIView):
     permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, format=None):
-        projects = Project.objects.filter(user=request.user).order_by("-created_at")
+        projects = Project.objects.filter(user=request.user).order_by("created_at")
         paginator = PageNumberPagination()
         paginated_projects = paginator.paginate_queryset(projects, request)
         serializer = ProjectSerializer(paginated_projects, many=True)

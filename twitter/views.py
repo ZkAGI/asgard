@@ -80,7 +80,7 @@ class ProjectTweetsListView(APIView):
         if tweet_state:
             tweets = Tweets.objects.filter(
                 project__id=project_id, state=tweet_state
-            ).order_by("-created_at")
+            ).order_by("created_at")
 
         paginator = PageNumberPagination()
         paginated_tweets = paginator.paginate_queryset(tweets, request)
