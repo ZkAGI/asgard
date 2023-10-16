@@ -147,7 +147,7 @@ class FetchTweetsView(APIView):
             )
         self.create_tweets(tweets=clean_tweets, total_count=total_counts)
         query = Tweets.objects.filter(user=request.user, project=self.project).order_by(
-            "-created_at"
+            "created_at"
         )
         paginator = PageNumberPagination()
         paginated_tweets = paginator.paginate_queryset(query, request)
