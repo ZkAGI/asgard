@@ -62,7 +62,7 @@ Return a JSON object as given format:
 def call_openai_api(messages, rules=""):
     openai.api_key = OPEN_AI_APIKEY
     return openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
+        model="gpt-3.5-turbo-0613",
         messages=messages,
         temperature=0,
         max_tokens=300,
@@ -111,7 +111,7 @@ Return a json object as given format
         )
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
+        model="gpt-3.5-turbo-0613",
         messages=[
             {"role": "system", "content": content},
             {
@@ -141,7 +141,7 @@ Return a json object as given format
     rate_value = int(result["rate"])
     if rate_value > 5:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
+            model="gpt-3.5-turbo-0613",
             messages=[
                 {
                     "role": "system",
