@@ -216,7 +216,9 @@ class ProjectView(APIView):
         projects = Project.objects.filter(user=request.user).order_by("created_at")
         paginator = PageNumberPagination()
         paginated_projects = paginator.paginate_queryset(projects, request)
-        serializer = ProjectSerializer(paginated_projects, many=True)
+        serializer = ProjectSerializer(
+            paginated_projects, context={"request": request}, many=True
+        )
 
         response_data = {
             "count": paginator.page.paginator.count,
@@ -232,7 +234,7 @@ class ProjectView(APIView):
         )
 
     def post(self, request, format=None):
-        serializer = ProjectSerializer(data=request.data)
+        serializer = ProjectSerializer(data=request.data, context={"request": request})
         if not serializer.is_valid():
             return StandardResponse(
                 data=None,
@@ -259,7 +261,7 @@ class ProjectDetailView(APIView):
 
     def get(self, request, pk, format=None):
         project = self.get_object(pk)
-        serializer = ProjectSerializer(project)
+        serializer = ProjectSerializer(project, context={"request": request})
         return StandardResponse(
             data=serializer.data,
             errors=None,
@@ -268,7 +270,9 @@ class ProjectDetailView(APIView):
 
     def put(self, request, pk, format=None):
         project = self.get_object(pk)
-        serializer = ProjectSerializer(project, data=request.data)
+        serializer = ProjectSerializer(
+            project, data=request.data, context={"request": request}
+        )
         if not serializer.is_valid():
             return StandardResponse(
                 data=None,

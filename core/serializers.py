@@ -75,6 +75,29 @@ class ProjectSerializer(serializers.Serializer):
         representation["posted_tweets"] = self.get_posted_tweets(instance)
         return representation
 
+    def validate(self, data):
+        """
+        Check that the project name is unique for the user.
+        """
+        user = self.context.get("request").user
+        project_name = data.get("name")
+
+        # If you're updating an existing instance, exclude the current instance from the check
+        if self.instance:
+            exists = (
+                Project.objects.filter(user=user, name=project_name)
+                .exclude(id=self.instance.id)
+                .exists()
+            )
+        else:
+            exists = Project.objects.filter(user=user, name=project_name).exists()
+
+        if exists:
+            raise serializers.ValidationError(
+                {"name": "Project with this name already exists for the user."}
+            )
+        return data
+
     def create(self, validated_data):
         return Project.objects.create(**validated_data)
 
