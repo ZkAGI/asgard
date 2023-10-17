@@ -187,7 +187,7 @@ class DashboardTweets(APIView):
     permission_classes = [IsAuthenticated, IsWhitelisted]
 
     def get(self, request, *args, **kwargs):
-        queryset = Tweets.objects.filter(user=request.user).order_by("created_at")
+        queryset = Tweets.objects.filter(user=request.user).order_by("-created_at")
         total_tweets = queryset.count()
         tweets_left = request.user.userprofile.tweets_left
         tweets_posted = queryset.filter(state="POSTED").count()
