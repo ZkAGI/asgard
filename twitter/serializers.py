@@ -51,7 +51,4 @@ class PostTweetRequestSerializer(serializers.Serializer):
         if tweet.user != request.user:
             raise serializers.ValidationError("Tweet does not belong to you")
 
-        if tweet.state == "POSTED":
-            raise serializers.ValidationError("Tweet has already been posted")
-
         return value
