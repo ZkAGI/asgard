@@ -118,7 +118,7 @@ class KeywordFetchView(APIView):
             return [], ""
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo-0613",
                 messages=[
                     {"role": "system", "content": OPEN_AI_INSTRUCTION},
                     {

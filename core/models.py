@@ -44,6 +44,7 @@ class Project(BaseModel):
     ai_rules = models.TextField(null=True, blank=True)
     keywords = models.JSONField(blank=True, null=True)
     soup_text = models.TextField(null=True, blank=True)
+    token = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.keywords:

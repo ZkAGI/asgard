@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timedelta
 
 import requests
+import asyncio
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -100,9 +101,7 @@ class ProjectTweetsListView(APIView):
         )
 
 
-class FetchTweetsView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsWhitelisted]
+class StreamTweetsView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = FetchTweetRequestSerializer(
@@ -114,15 +113,6 @@ class FetchTweetsView(APIView):
                 errors=serializer.errors,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-
-        self.user_profile = UserProfile.objects.get(user=request.user)
-        if self.user_profile.tweets_left <= 0 or request.user.is_active is False:
-            return StandardResponse(
-                data=None,
-                errors={"message": "limit exhausted"},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
-
         self.project = Project.objects.get(
             id=serializer.validated_data["project_id"], user=request.user
         )
@@ -133,22 +123,17 @@ class FetchTweetsView(APIView):
             max_results=10,
             screen_name=request.user.username,
         )
-
-        json_response = self.connect_to_endpoint(
+        twitter_response = self.connect_to_endpoint(
             url=TWITTER_API_ENDPOINT, params=twtr_query
         )
-
-        clean_tweets, total_counts = self.process_tweets_and_responses(json_response)
-        if not clean_tweets:
-            return StandardResponse(
-                data=None,
-                errors={"message": "limit exhausted"},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
-        self.create_tweets(tweets=clean_tweets, total_count=total_counts)
+        next_token = twitter_response["meta"].get("next_token", None)
+        self.project.token = next_token
+        clean_tweets = asyncio.run(self.generate_response(twitter_response))
+        self.create_tweets(tweets=clean_tweets)
         query = Tweets.objects.filter(user=request.user, project=self.project).order_by(
             "-created_at"
         )
+        Project.objects.filter(id=self.project.id).update(token=next_token)
         paginator = PageNumberPagination()
         paginated_tweets = paginator.paginate_queryset(query, request)
         serialized_tweets = TweetSerializer(paginated_tweets, many=True)
@@ -165,7 +150,61 @@ class FetchTweetsView(APIView):
             status_code=status.HTTP_200_OK,
         )
 
-    def create_tweets(self, tweets, total_count):
+    def build_twitter_query(self, keywords, max_results, screen_name):
+
+        keywords = list(map(lambda x: f'"{x}"', keywords))
+        query_str = f'({" OR ".join(keywords)})'
+        query_str += f" -is:retweet -is:reply lang:en -from:{screen_name}"
+
+        if self.project.token:
+            query_params = {
+                "query": query_str,
+                "tweet.fields": "author_id,created_at",
+                "user.fields": "name",
+                "max_results": str(max_results),
+                "next_token": str(self.project.token),
+            }
+        else:
+            query_params = {
+                "query": query_str,
+                "tweet.fields": "author_id,created_at",
+                "user.fields": "name",
+                "max_results": str(max_results),
+            }
+        return query_params
+
+    def connect_to_endpoint(self, url, params):
+        response = requests.get(url, auth=bearer_oauth, params=params)
+        if response.status_code != 200:
+            raise Exception(f"Error: {response.status_code}, {response.text}")
+        return response.json()
+
+    async def generate_response(self, twitter_response):
+        clean_tweets = []
+        tweets = twitter_response.get("data", [])
+        for tweet in tweets:
+            tweet_text = tweet.get("text", "")
+            if tweet_text is "":
+                continue
+            # Assuming get_openai_response can be made async
+            openai_response = get_openai_response(
+                tweet_text=tweet_text,
+                soup_text=self.project.soup_text,
+                url=self.project.url,
+                keywords=self.project.keywords,
+                rules=self.project.ai_rules if self.project.ai_rules else "",
+            )
+            if (
+                    "reply_text" in openai_response
+                    and openai_response["reply_text"].strip()
+            ):
+                tweet["response"] = openai_response["reply_text"]
+                tweet["posted"] = "false"
+                clean_tweets.append(tweet)
+        return clean_tweets
+
+    def create_tweets(self, tweets):
+        total_count = 10
         for tweet in tweets:
             Tweets.objects.create(
                 user=self.request.user,
@@ -178,83 +217,10 @@ class FetchTweetsView(APIView):
                 state="FETCHED",
             )
 
-        self.user_profile.tweets_left = max(
-            self.user_profile.tweets_left - total_count, 0
-        )
-        self.user_profile.save()
-
-    def connect_to_endpoint(self, url, params):
-        response = requests.get(url, auth=bearer_oauth, params=params)
-        if response.status_code != 200:
-            raise Exception(f"Error: {response.status_code}, {response.text}")
-        return response.json()
-
-    def build_twitter_query(self, keywords, max_results, screen_name):
-        keywords = list(map(lambda x: f'"{x}"', keywords))
-        query_str = f'({" OR ".join(keywords)})'
-        query_str += f" -is:retweet -is:reply lang:en -from:{screen_name}"
-
-        query_params = {
-            "query": query_str,
-            "tweet.fields": "author_id,created_at",
-            "user.fields": "name",
-            "max_results": str(max_results),
-        }
-
-        return query_params
-
-    def process_tweets_and_responses(self, json_response):
-        clean_tweets = []
-        total_counts = 0
-        tweet_count_2 = 0
-
-        next_token = json_response["meta"].get("next_token", None)
-        tweets = json_response.get("data", [])
-        tweet_count_1 = len(tweets)
-
-        processed_tweets = set()
-        processed_responses = set()
-        min_relevant_responses = 5
-        relevant_responses_count = 0
-        twitter_request_count = 0
-
-        while relevant_responses_count < min_relevant_responses:
-            twitter_request_count += 1
-            if twitter_request_count > 5:
-                break
-
-            for tweet in tweets:
-                tweet_text = tweet.get("text", "")
-                if tweet_text in processed_tweets:
-                    continue
-                openai_response = get_openai_response(
-                    tweet_text=tweet_text,
-                    soup_text=self.project.soup_text,
-                    url=self.project.url,
-                    keywords=self.project.keywords,
-                    rules=self.project.ai_rules if self.project.ai_rules else "",
-                )
-
-                if (
-                    "reply_text" in openai_response
-                    and openai_response["reply_text"].strip()
-                ):
-                    if openai_response["reply_text"] in processed_responses:
-                        continue
-
-                    processed_tweets.add(tweet_text)
-                    processed_responses.add(openai_response["reply_text"])
-                    tweet["response"] = openai_response["reply_text"]
-                    tweet["posted"] = "false"
-                    clean_tweets.append(tweet)
-
-                    relevant_responses_count += 1
-
-            if relevant_responses_count >= min_relevant_responses:
-                break
-
-        total_counts = tweet_count_1 + tweet_count_2
-        return clean_tweets, total_counts
+        # self.user_profile.tweets_left = max(
+        #     self.user_profile.tweets_left - total_count, 0
+        # )
+        # self.user_profile.save()
 
 
 class PostTweetView(APIView):
@@ -471,7 +437,7 @@ class AccessTokenView(APIView):
         return redirect(redirect_url)
 
     def get_twtr_acc(
-        self, screen_name, access_token, oauth_token, access_token_secret, twitter_id
+            self, screen_name, access_token, oauth_token, access_token_secret, twitter_id
     ):
         try:
             twtr_acc = TwitterAccount.objects.get(oauth_token=oauth_token)

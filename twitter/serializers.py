@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from core.models import Project
+from core.models import Project, UserProfile
 from twitter.models import Tweets
 
 
@@ -17,6 +17,14 @@ class FetchTweetRequestSerializer(serializers.Serializer):
             )
         return value
 
+    def validate(self, data):
+        user = self.context.get("request").user
+        user_profile = UserProfile.objects.get(user=user)
+        if user_profile.tweets_left <= 0 or user.is_active is False:
+            raise serializers.ValidationError(
+                "You have no tweets left or your account is not active"
+            )
+        return data
 
 class TweetSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
