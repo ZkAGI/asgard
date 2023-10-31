@@ -132,7 +132,6 @@ class KeywordFetchView(APIView):
                 frequency_penalty=0.76,
                 presence_penalty=0.44,
             )
-            import pdb; pdb.set_trace()
             keywords = ast.literal_eval(response.choices[0]["message"]["content"])
             return keywords, text.strip()
         except RateLimitError as e:
