@@ -5,9 +5,9 @@ from twitter.views import (
     CheckTwitterView,
     PostTweetView,
     RequestOAuthView,
+    StreamTweetsView,
     TweetDetailView,
     TwitterAccountDelete,
-    StreamTweetsView,
 )
 
 urlpatterns = [

@@ -26,6 +26,7 @@ class FetchTweetRequestSerializer(serializers.Serializer):
             )
         return data
 
+
 class TweetSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     project = serializers.ReadOnlyField(source="project.id")

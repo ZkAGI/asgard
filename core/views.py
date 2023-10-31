@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from twitter.models import Tweets
 from twitter.serializers import TweetSerializer
 
-from .constants import OPEN_AI_APIKEY, OPEN_AI_INSTRUCTION, HEADERS
+from .constants import HEADERS, OPEN_AI_APIKEY, OPEN_AI_INSTRUCTION
 from .models import Project
 from .serializers import (
     KeywordRequestSerializer,
@@ -107,7 +107,7 @@ class KeywordFetchView(APIView):
         )
 
     def fetch_keywords(self, url) -> (list, str):
-        response = requests.get(url, headers=HEADERS,verify=False)
+        response = requests.get(url, headers=HEADERS, verify=False)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, "html.parser")
         text = soup.get_text()
@@ -132,6 +132,7 @@ class KeywordFetchView(APIView):
                 frequency_penalty=0.76,
                 presence_penalty=0.44,
             )
+            import pdb; pdb.set_trace()
             keywords = ast.literal_eval(response.choices[0]["message"]["content"])
             return keywords, text.strip()
         except RateLimitError as e:

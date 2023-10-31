@@ -1,9 +1,9 @@
 import ast
+import asyncio
 import json
 from datetime import datetime, timedelta
 
 import requests
-import asyncio
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -102,7 +102,6 @@ class ProjectTweetsListView(APIView):
 
 
 class StreamTweetsView(APIView):
-
     def post(self, request, *args, **kwargs):
         serializer = FetchTweetRequestSerializer(
             data=request.data, context={"request": request}
@@ -184,7 +183,7 @@ class StreamTweetsView(APIView):
         tweets = twitter_response.get("data", [])
         for tweet in tweets:
             tweet_text = tweet.get("text", "")
-            if tweet_text is "":
+            if tweet_text == "":
                 continue
             # Assuming get_openai_response can be made async
             openai_response = get_openai_response(
@@ -195,8 +194,8 @@ class StreamTweetsView(APIView):
                 rules=self.project.ai_rules if self.project.ai_rules else "",
             )
             if (
-                    "reply_text" in openai_response
-                    and openai_response["reply_text"].strip()
+                "reply_text" in openai_response
+                and openai_response["reply_text"].strip()
             ):
                 tweet["response"] = openai_response["reply_text"]
                 tweet["posted"] = "false"
@@ -437,7 +436,7 @@ class AccessTokenView(APIView):
         return redirect(redirect_url)
 
     def get_twtr_acc(
-            self, screen_name, access_token, oauth_token, access_token_secret, twitter_id
+        self, screen_name, access_token, oauth_token, access_token_secret, twitter_id
     ):
         try:
             twtr_acc = TwitterAccount.objects.get(oauth_token=oauth_token)

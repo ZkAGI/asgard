@@ -72,8 +72,6 @@ def call_openai_api(messages, rules=""):
     )
 
 
-
-
 def get_openai_response(tweet_text, soup_text, url, keywords, rules):
     # Set up your OpenAI API key here
     openai.api_key = OPEN_AI_APIKEY
@@ -103,16 +101,18 @@ Return a json object as given format
 {
     \"rate\": 8.5,
     \"reply_text\":\"reply_text\"
-}"""% (rules,soup_text,url,keywords_dump)
+}""" % (
+        rules,
+        soup_text,
+        url,
+        keywords_dump,
+    )
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-0613",
         messages=[
             {"role": "system", "content": content},
-            {
-                "role": "user",
-                "content": '''Posted tweet text: "%s"''' % (tweet_text,)
-            },
+            {"role": "user", "content": '''Posted tweet text: "%s"''' % (tweet_text,)},
         ],
         temperature=0,
         max_tokens=500,
