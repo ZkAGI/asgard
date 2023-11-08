@@ -160,6 +160,7 @@ class StreamTweetsView(APIView):
                 "query": query_str,
                 "tweet.fields": "author_id,created_at",
                 "user.fields": "name",
+                "sort_order": "relevancy",
                 "max_results": str(max_results),
                 "next_token": str(self.project.token),
             }
@@ -168,6 +169,7 @@ class StreamTweetsView(APIView):
                 "query": query_str,
                 "tweet.fields": "author_id,created_at",
                 "user.fields": "name",
+                "sort_order": "relevancy",
                 "max_results": str(max_results),
             }
         return query_params
