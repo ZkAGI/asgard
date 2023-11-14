@@ -19,6 +19,13 @@ class Tweets(BaseModel):
     author_id = models.CharField(max_length=255)
     tweet_id = models.CharField(max_length=255)
     state = models.CharField(max_length=255, choices=TWEET_STATES)
+    retweet_count = models.IntegerField(default=0)
+    reply_count = models.IntegerField(default=0)
+    like_count = models.IntegerField(default=0)
+    quote_count = models.IntegerField(default=0)
+    bookmark_count = models.IntegerField(default=0)
+    impression_count = models.IntegerField(default=0)
+
 
     def __str__(self):
         return f"{self.user.username}'s Tweet - ({self.state})"
