@@ -158,7 +158,7 @@ class StreamTweetsView(APIView):
         if self.project.token:
             query_params = {
                 "query": query_str,
-                "tweet.fields": "author_id,created_at",
+                "tweet.fields": "author_id,created_at,public_metrics",
                 "user.fields": "name",
                 "sort_order": "relevancy",
                 "max_results": str(max_results),
@@ -167,7 +167,7 @@ class StreamTweetsView(APIView):
         else:
             query_params = {
                 "query": query_str,
-                "tweet.fields": "author_id,created_at",
+                "tweet.fields": "author_id,created_at,public_metrics",
                 "user.fields": "name",
                 "sort_order": "relevancy",
                 "max_results": str(max_results),
@@ -184,6 +184,7 @@ class StreamTweetsView(APIView):
         clean_tweets = []
         tweets = twitter_response.get("data", [])
         for tweet in tweets:
+
             tweet_text = tweet.get("text", "")
             if tweet_text == "":
                 continue
@@ -201,6 +202,13 @@ class StreamTweetsView(APIView):
             ):
                 tweet["response"] = openai_response["reply_text"]
                 tweet["posted"] = "false"
+                tweet['retweet_count'] = tweet['public_metrics']['retweet_count']
+                tweet['reply_count'] = tweet['public_metrics']['reply_count']
+                tweet['like_count'] = tweet['public_metrics']['like_count']
+                tweet['quote_count'] = tweet['public_metrics']['quote_count']
+                tweet['bookmark_count'] = tweet['public_metrics']['bookmark_count']
+                tweet['impression_count'] = tweet['public_metrics']['impression_count']
+
                 clean_tweets.append(tweet)
         return clean_tweets
 
@@ -216,6 +224,12 @@ class StreamTweetsView(APIView):
                 ai_response=tweet["response"],
                 misc_data={},
                 state="FETCHED",
+                retweet_count=tweet['retweet_count'],
+                reply_count=tweet['reply_count'],
+                like_count=tweet['like_count'],
+                quote_count=tweet['quote_count'],
+                bookmark_count=tweet['bookmark_count'],
+                impression_count=tweet['impression_count'],
             )
 
         # self.user_profile.tweets_left = max(

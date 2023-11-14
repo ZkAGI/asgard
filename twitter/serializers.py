@@ -44,6 +44,12 @@ class TweetSerializer(serializers.ModelSerializer):
             "created_at",
             "author_id",
             "tweet_id",
+            "retweet_count",
+            "reply_count",
+            "like_count",
+            "quote_count",
+            "bookmark_count",
+            "impression_count",
         ]
 
 
