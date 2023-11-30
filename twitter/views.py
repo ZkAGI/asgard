@@ -164,6 +164,7 @@ class StreamTweetsView(APIView):
                 "max_results": str(max_results),
                 "next_token": str(self.project.token),
             }
+            print("Current Project Token: ", str(self.project.token))
         else:
             query_params = {
                 "query": query_str,
@@ -172,6 +173,7 @@ class StreamTweetsView(APIView):
                 "sort_order": "relevancy",
                 "max_results": str(max_results),
             }
+            print("Current Project Token: ", str(self.project.token))
         return query_params
 
     def connect_to_endpoint(self, url, params):

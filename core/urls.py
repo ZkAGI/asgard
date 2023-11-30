@@ -10,6 +10,7 @@ from core.views import (
     UserLogoutView,
     UserRegistrationView,
 )
+from lunarcrush.views import GetFeedsView, StreamLunarcrushFeedTweets
 from twitter.views import ProjectTweetsListView
 
 urlpatterns = [
@@ -20,6 +21,8 @@ urlpatterns = [
     path("keywords/", KeywordFetchView.as_view(), name="fetch-keywords"),
     path("dashboard/tweets/", DashboardTweets.as_view(), name="dashboard-tweets"),
     path("projects/", ProjectView.as_view()),
+    path("lunar/feeds/", GetFeedsView.as_view(), name="lunarcrush-feeds"),
+path("lunar/feeds/tweets/", StreamLunarcrushFeedTweets.as_view(), name="lunarcrush-feeds"),
     path("project/<int:pk>/", ProjectDetailView.as_view()),
     path(
         "projects/<int:project_id>/tweets/",
