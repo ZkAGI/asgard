@@ -115,9 +115,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "asgard",
-        "USER": "postgres",
-        "PASSWORD": "bitBaza$786",
-        "HOST": "asgard-prod.cifztxndy8sd.ap-south-1.rds.amazonaws.com",
+        "USER": "ubuntu",
+        "PASSWORD": "ubuntu",
+        "HOST": "ec2-3-7-189-222.ap-south-1.compute.amazonaws.com",
         "PORT": 5432,
     }
 }
