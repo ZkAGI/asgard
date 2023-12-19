@@ -1,9 +1,10 @@
 TWITTER_API_ENDPOINT = "https://api.twitter.com/2/tweets/search/recent"
-CONSUMER_KEY = "ns6kgrJsy6Ja27MIDfZMdHmWf"
-CONSUMER_SECRET = "RJxLIe7QlpUfagm0KCbhcNsqz9EOpikqR8EczlcWf8sAshoQ6u"
+CONSUMER_KEY = "nY1bSAIhL5FryHE5wtdbgZReX"
+CONSUMER_SECRET = "PvmOxCsukox7MecSvhVUHsxiQOmkUOHMCtArjPuNFbQs0SC0Uy"
 TWITTER_REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
 TWITTER_ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token"
 CALLBACK_URI = "https://api.engagex.bitbaza.io/api/v1/twitter/request-token/"
 ACCESS_TOKEN_SECRET = "vs4X1p9QLpXaEtCHqDHIXMesgewpWsZjoScqLZlIdWh52"
 ACCESS_TOKEN = "1433525480632717315-yi1NkqsitfpHGzdwo4tQmSfqdbcaOY"
 DAILY_TWEET_LIMIT = 100
+BEARER_TOKEN="AAAAAAAAAAAAAAAAAAAAAGBtpAEAAAAAOtFI9K4MwNYb5P%2Bd9N7FA5Gei%2Fo%3DLaZ6HtWDrjdiv95OJlvDCJ4pjYgYF61TsP9fJLIi8WmQCVwkru"

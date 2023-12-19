@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.constants import EMAIL_REGEX
-from core.models import Project, UserProfile
+from core.models import Project, UserProfile, TrackedAccount
 from twitter.models import Tweets
 
 User = get_user_model()
@@ -122,3 +122,23 @@ class KeywordRequestSerializer(serializers.Serializer):
                 "Invalid project ID or you do not have permission to access this project"
             )
         return value
+
+
+class TrackedAccountSerializer(serializers.Serializer):
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    username = serializers.CharField(max_length=100)
+
+    def create(self, validated_data):
+        return TrackedAccount.objects.create(**validated_data)
+
+
+class TrackedAccountDetails(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+    is_active = serializers.BooleanField()
+    project_id = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    username = serializers.CharField(max_length=100)
+
+    def create(self, validated_data):
+        return TrackedAccount.objects.create(**validated_data)

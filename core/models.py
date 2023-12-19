@@ -56,3 +56,9 @@ class Project(BaseModel):
 
     class Meta:
         unique_together = ["user", "name"]
+
+
+class TrackedAccount(BaseModel):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    username = models.CharField(max_length=100)
+

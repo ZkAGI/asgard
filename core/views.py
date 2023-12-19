@@ -17,12 +17,12 @@ from twitter.models import Tweets
 from twitter.serializers import TweetSerializer
 
 from .constants import HEADERS, OPEN_AI_APIKEY, OPEN_AI_INSTRUCTION
-from .models import Project
+from .models import Project, TrackedAccount
 from .serializers import (
     KeywordRequestSerializer,
     ProjectSerializer,
     UserDetailsSerializer,
-    UserRegistrationSerializer,
+    UserRegistrationSerializer, TrackedAccountSerializer,
 )
 from .utils import IsWhitelisted, StandardResponse
 
@@ -95,7 +95,7 @@ class KeywordFetchView(APIView):
                 data=None,
                 errors={
                     "message": "Not enough content found on the requested URL, Please add keywords manually or try "
-                    "again later"
+                               "again later"
                 },
                 status_code=status.HTTP_200_OK,
             )
@@ -293,6 +293,81 @@ class ProjectDetailView(APIView):
     def delete(self, request, pk, format=None):
         project = self.get_object(pk)
         project.delete()
+        return StandardResponse(
+            data=None,
+            errors=None,
+            status_code=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class TrackedAccountView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
+
+    def post(self, request, *args, **kwargs):
+        serializer = TrackedAccountSerializer(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return StandardResponse(
+                data=None,
+                errors=serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get the project instance
+        try:
+            project = Project.objects.get(id=request.data.get("project"))
+        except Project.DoesNotExist:
+            return StandardResponse(
+                data=None,
+                errors={"project": "Project not found."},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        tracked_account = serializer.save(project=project)
+
+        return StandardResponse(
+            data=TrackedAccountSerializer(tracked_account).data,
+            errors=None,
+            status_code=status.HTTP_201_CREATED,
+        )
+
+
+class TrackedDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsWhitelisted]
+
+    def get(self, request, project_id, format=None):
+        accounts = TrackedAccount.objects.filter(project__id=project_id, project__user=request.user).order_by("created_at")
+        paginator = PageNumberPagination()
+        paginated_projects = paginator.paginate_queryset(accounts, request)
+        serializer = TrackedAccountSerializer(
+            paginated_projects, context={"request": request}, many=True
+        )
+
+        response_data = {
+            "count": paginator.page.paginator.count,
+            "next": paginator.get_next_link(),
+            "previous": paginator.get_previous_link(),
+            "results": serializer.data,
+        }
+
+        return StandardResponse(
+            data=response_data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, pk, format=None):
+        try:
+            tracked_account = TrackedAccount.objects.get(pk=pk)
+        except TrackedAccount.DoesNotExist:
+            return StandardResponse(
+                data=None,
+                errors=None,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        tracked_account.delete()
         return StandardResponse(
             data=None,
             errors=None,

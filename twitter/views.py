@@ -24,7 +24,7 @@ from twitter.constants import (
     DAILY_TWEET_LIMIT,
     TWITTER_ACCESS_TOKEN_URL,
     TWITTER_API_ENDPOINT,
-    TWITTER_REQUEST_TOKEN_URL,
+    TWITTER_REQUEST_TOKEN_URL, BEARER_TOKEN,
 )
 from twitter.models import Tweets, TwitterAccount
 from twitter.serializers import (
@@ -39,7 +39,7 @@ User = get_user_model()
 
 
 def bearer_oauth(r):
-    r.headers["Authorization"] = f"Bearer {bearer_token}"
+    r.headers["Authorization"] = f"Bearer {BEARER_TOKEN}"
     r.headers["User-Agent"] = "v2RecentSearchPython"
     return r
 

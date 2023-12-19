@@ -8,7 +8,7 @@ from core.views import (
     UserDetailsView,
     UserLoginView,
     UserLogoutView,
-    UserRegistrationView,
+    UserRegistrationView, TrackedAccountView, TrackedDetailView,
 )
 from lunarcrush.views import GetFeedsView, StreamLunarcrushFeedTweets
 from twitter.views import ProjectTweetsListView
@@ -29,5 +29,7 @@ path("lunar/feeds/tweets/", StreamLunarcrushFeedTweets.as_view(), name="lunarcru
         ProjectTweetsListView.as_view(),
         name="project-tweets",
     ),
+    path('tracked-accounts/<int:project_id>/', TrackedDetailView.as_view(), name='tracked_account_details'),
+    path('tracked-accounts/', TrackedAccountView.as_view(), name='tracked_account_details'),
     path("twitter/", include("twitter.urls")),
 ]
