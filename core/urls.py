@@ -10,6 +10,7 @@ from core.views import (
     UserLogoutView,
     UserRegistrationView, TrackedAccountView, TrackedDetailView,
 )
+from listner.views import IntentListnerView, IncentiviseListnerView, TGUserListView
 from lunarcrush.views import GetFeedsView, StreamLunarcrushFeedTweets
 from twitter.views import ProjectTweetsListView
 
@@ -32,4 +33,7 @@ path("lunar/feeds/tweets/", StreamLunarcrushFeedTweets.as_view(), name="lunarcru
     path('tracked-accounts/<int:project_id>/', TrackedDetailView.as_view(), name='tracked_account_details'),
     path('tracked-accounts/', TrackedAccountView.as_view(), name='tracked_account_details'),
     path("twitter/", include("twitter.urls")),
+    path("listner/intent/", IntentListnerView.as_view(), name="intent-listner"),
+    path("listner/incentivise/", IncentiviseListnerView.as_view(), name="incentivise-listner"),
+    path('listner/leaderboard/', TGUserListView.as_view(), name='tguser-list'),
 ]
