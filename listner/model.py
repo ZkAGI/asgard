@@ -11,10 +11,8 @@ from dateutil import parser
 import os
 from pytz import timezone
 from telethon.sync import TelegramClient
-from telethon.tl.functions.channels import JoinChannelRequest
 
-nltk.download('punkt')
-
+# nltk.download('punkt')
 
 class Scrape:
     """

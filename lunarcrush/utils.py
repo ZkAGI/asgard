@@ -13,7 +13,6 @@ def get_lunarcrush_coins_feeds(coin_symbol):
     }
 
     response = requests.request("GET", url, headers=headers, data={})
-    import pdb; pdb.set_trace()
     return response
 
 def get_lunarcrush_coins_infulencers(coin_symbol):

@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     # Manually Created Django Apps
     "core",
     "twitter",
-    "listner"
+    "listner",
+    "tgotp"
 ]
 
 REST_FRAMEWORK = {

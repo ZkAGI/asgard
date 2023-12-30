@@ -10,8 +10,9 @@ from core.views import (
     UserLogoutView,
     UserRegistrationView, TrackedAccountView, TrackedDetailView,
 )
-from listner.views import IntentListnerView, IncentiviseListnerView, TGUserListView
+from listner.views import IntentListnerView, IncentiviseListnerView, TGUserListView, QuestView
 from lunarcrush.views import GetFeedsView, StreamLunarcrushFeedTweets
+from tgotp.views import VerifyTelegram
 from twitter.views import ProjectTweetsListView
 
 urlpatterns = [
@@ -35,5 +36,7 @@ path("lunar/feeds/tweets/", StreamLunarcrushFeedTweets.as_view(), name="lunarcru
     path("twitter/", include("twitter.urls")),
     path("listner/intent/", IntentListnerView.as_view(), name="intent-listner"),
     path("listner/incentivise/", IncentiviseListnerView.as_view(), name="incentivise-listner"),
-    path('listner/leaderboard/', TGUserListView.as_view(), name='tguser-list'),
+    path('listner/leaderboard/<int:quest_id>/', TGUserListView.as_view(), name='tguser-list'),
+    path('telegram/verify/', VerifyTelegram.as_view(), name='telegram-verify'),
+    path('quest/', QuestView.as_view(), name='quest'),
 ]
