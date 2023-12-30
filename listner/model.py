@@ -12,7 +12,7 @@ import os
 from pytz import timezone
 from telethon.sync import TelegramClient
 
-# nltk.download('punkt')
+nltk.download('punkt')
 
 class Scrape:
     """
