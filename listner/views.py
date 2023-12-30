@@ -22,7 +22,7 @@ async def async_scrape_telegram(scraper, classifier, intent):
     # Use .loc to avoid SettingWithCopyWarning
     df2.loc[:, 'is_of_value'] = df2['message'].apply(intent.intent)
     df2.loc[:, 'is_narrow_filter'] = df2['message'].apply(intent.get_narrow_filter)
-    df2.loc[:, 'is_relevant'] = None
+    df2['is_relevant'] = None
     df2.loc[:, 'has_responded'] = None
 
     # Convert Timestamp objects to string format
