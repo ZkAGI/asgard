@@ -49,11 +49,8 @@ class IntentListnerView(APIView):
         scraped_data = loop.run_until_complete(async_scrape_telegram(scraper, classifier, intent))
         loop.close()
 
-        return StandardResponse(
-            data=scraped_data,
-            errors=None,
-            status_code=status.HTTP_200_OK,
-        )
+        return Response(data=scraped_data)
+
 
 
 class IncentiviseListnerView(APIView):
