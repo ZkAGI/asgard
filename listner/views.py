@@ -49,8 +49,11 @@ class IntentListnerView(APIView):
         scraped_data = loop.run_until_complete(async_scrape_telegram(scraper, classifier, intent))
         loop.close()
 
-        return Response(data=scraped_data)
-
+        return StandardResponse(
+            data=scraped_data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
 
 
 class IncentiviseListnerView(APIView):
@@ -78,7 +81,11 @@ class IncentiviseListnerView(APIView):
                     existing_record.save()
             except:
                 TGUser.objects.create(userid=data['sender_id'], score=1, quest_id=quest_id)
-        return Response(data=scraped_data)
+        return StandardResponse(
+            data=scraped_data,
+            errors=None,
+            status_code=status.HTTP_200_OK,
+        )
 
 
 class TGUserListView(APIView):
