@@ -62,7 +62,7 @@ class Scrape:
                         msg_date.append(msg.date.astimezone(timezone('Asia/Kolkata')) + datetime.timedelta(hours=5, minutes=30))
 
             df = pd.DataFrame({"message": message, "message_id": message_id,
-                               "channel_name": channel_name, "msg_date": msg_date, "sender_id": sender_id})
+                               "channel_name": channel_name, "sender_id": sender_id})
             df['platform'] = 'Telegram'
             return df
 
